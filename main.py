@@ -31,25 +31,26 @@ async def on_guild_join(guild):
 def check_admin(ctx):
     conn = sqlite3.connect('data/Guilds.db')
     cursor = conn.cursor()
-    admin_role_id = cursor.execute(f"SELECT * FROM Guilds where id = {ctx.guild.id};").fetchone()[1]
+    result = cursor.execute(f"SELECT * FROM Guilds where id = {ctx.guild.id};").fetchone()
     conn.close()
-    for i in ctx.message.author.roles:
-        if i.id == admin_role_id:
-            return True
+    if ctx.channel.id == result[4]:
+        for i in ctx.message.author.roles:
+            if i.id == result[1]:
+                return True
     return False
 
 
-@bot.command(name='glt')
-async def glt(ctx):
+@bot.command(name='guilt_deploy', aliases=['gltdep'])
+async def guilt_deploy(ctx):
     await on_guild_join(ctx.guild)
 
 
-@bot.command(name='glrem')
-async def glt(ctx):
+@bot.command(name='guilt_remove', aliases=['gltrem'])
+async def guilt_remove(ctx):
     await Guild.remove_all(ctx.guild)
 
 
-@bot.command(name='set_slowmode')
+@bot.command(name='set_slowmode', aliases=['setslow'])
 @commands.check(check_admin)
 async def set_slowmode(ctx, time):
     await Guild.set_slowmode(ctx.guild, time)

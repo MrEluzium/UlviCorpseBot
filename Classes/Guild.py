@@ -22,7 +22,7 @@ class GuildControl:
             admin_role: discord.PermissionOverwrite(read_messages=True)
         }
 
-        category = await guild.create_category('RPG', reason=reason)
+        category = await guild.create_category('RPG', reason=reason, overwrites=player_overwrites)
         admin_channel = await guild.create_text_channel('Admin', category=category, reason=reason, slowmode_delay=3, overwrites=admin_overwrites)
         tavern_channel = await guild.create_text_channel('Таверна', category=category, reason=reason, slowmode_delay=3, overwrites=player_overwrites)
         shop_channel = await guild.create_text_channel('Рынок', category=category, reason=reason, slowmode_delay=3, overwrites=player_overwrites)
@@ -47,6 +47,8 @@ class GuildControl:
 
         [await guild.get_role(result[i]).delete(reason=reason) for i in range(1, 3)]  # Delete roles
         [await guild.get_channel(result[i]).delete(reason=reason) for i in range(7, 2, -1)]  # Delete channels amd category
+
+        await guild.leave()
 
     async def set_slowmode(self, guild, time):
         conn = sqlite3.connect('data/Guilds.db')
