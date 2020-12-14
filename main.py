@@ -1,19 +1,58 @@
 import discord
 import asyncio
-from time import sleep
 import sqlite3
 import progressbar
 from discord import colour as dscolor
 from discord.ext import tasks, commands
 from os import name as os_name
 from Classes.Character import CharacterControl
+from Classes.Guild import GuildControl
 from settings import TOKEN
 Character = CharacterControl()
+Guild = GuildControl()
 bot = commands.Bot(command_prefix='/')
+
 
 @bot.event
 async def on_ready():
     print(f'{bot.user} has connected to Discord!')
+
+
+@bot.event
+async def on_guild_join(guild):
+    print(f'\nJoined {guild.name}\n'
+          f'ID: {guild.id}\n'
+          f'Region: {guild.region}\n'
+          f'Amount: {len(guild.members)}')
+
+    await Guild.on_join(guild)
+
+
+def check_admin(ctx):
+    conn = sqlite3.connect('data/Guilds.db')
+    cursor = conn.cursor()
+    admin_role_id = cursor.execute(f"SELECT * FROM Guilds where id = {ctx.guild.id};").fetchone()[1]
+    conn.close()
+    for i in ctx.message.author.roles:
+        if i.id == admin_role_id:
+            return True
+    return False
+
+
+@bot.command(name='glt')
+async def glt(ctx):
+    await on_guild_join(ctx.guild)
+
+
+@bot.command(name='glrem')
+async def glt(ctx):
+    await Guild.remove_all(ctx.guild)
+
+
+@bot.command(name='set_slowmode')
+@commands.check(check_admin)
+async def set_slowmode(ctx, time):
+    await Guild.set_slowmode(ctx.guild, time)
 
 
 @bot.command(name='stats')
