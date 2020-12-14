@@ -59,15 +59,16 @@ def check_adventure(ctx):
 
 
 @bot.command(name='guilt_deploy', aliases=['gltdep'])
-@commands.check(check_admin)
 async def guilt_deploy(ctx):
-    await on_guild_join(ctx.guild)
+    if Guild.read(ctx.guild.id) is None:
+        await on_guild_join(ctx.guild)
 
 
 @bot.command(name='guilt_remove', aliases=['gltrem'])
 @commands.check(check_admin)
 async def guilt_remove(ctx):
     await Guild.remove_all(ctx.guild)
+
 
 @bot.command(name='guilt_remove_soft', aliases=['gltrems'])
 @commands.check(check_admin)
@@ -83,7 +84,7 @@ async def set_slowmode(ctx, time):
 
 @bot.command(name='stats')
 @commands.check(check_tavern)
-async def stats(ctx, stat_embed_ver=1):
+async def stats(ctx, stat_embed_ver=2):
     await check_player_in_game(ctx.author.id)
 
     current_char = Character.read(ctx.author.id)
@@ -92,7 +93,7 @@ async def stats(ctx, stat_embed_ver=1):
     if str(embed_color) == '#000000':
         embed_color = dscolor.Colour(16777214)
 
-    if stat_embed_ver:
+    if stat_embed_ver == 0:
         embed = discord.Embed(color=embed_color)
         embed.set_thumbnail(url=ctx.author.avatar_url)
         embed.add_field(name=f"**Профиль игрока**", value=ctx.author.mention, inline=False)
@@ -110,7 +111,8 @@ async def stats(ctx, stat_embed_ver=1):
                              f"{current_char[6]} \n"
                              f"{current_char[7]}**",
                         value="    ‌‌‍‍", inline=True)
-    else:
+
+    elif stat_embed_ver == 1:
         embed = discord.Embed(color=embed_color)
         embed.set_thumbnail(url=ctx.author.avatar_url)
         embed.add_field(name=f"**Профиль игрока**",
@@ -122,6 +124,19 @@ async def stats(ctx, stat_embed_ver=1):
                  ":crossed_swords: Сила • 1\n"
                  ":coin: Монеты • 5",
             value="    ‌‌‍‍", inline=False)
+
+    elif stat_embed_ver == 2:
+        embed = discord.Embed(color=embed_color)
+        embed.set_thumbnail(url=ctx.author.avatar_url)
+        embed.add_field(name=f"**Профиль игрока**",
+                        value=ctx.author.mention, inline=False)
+        embed.add_field(
+            name="**:crown: Уровень       1 \n"
+                 ":star: Опыт             0 | 240 \n"
+                 ":heart: Здоровье    150 | 150\n"
+                 ":crossed_swords: Сила               1\n"
+                 ":coin: Монеты       10**",
+            value=" ‌‌‍‍", inline=False)
     await ctx.send(embed=embed)
 
 
