@@ -29,10 +29,7 @@ async def on_guild_join(guild):
 
 
 def check_admin(ctx):
-    conn = sqlite3.connect('data/Guilds.db')
-    cursor = conn.cursor()
-    result = cursor.execute(f"SELECT * FROM Guilds where id = {ctx.guild.id};").fetchone()
-    conn.close()
+    result = Guild.read(ctx.guild.id)
     if ctx.channel.id == result[4]:
         for i in ctx.message.author.roles:
             if i.id == result[1]:
@@ -40,14 +37,42 @@ def check_admin(ctx):
     return False
 
 
+def check_tavern(ctx):
+    result = Guild.read(ctx.guild.id)
+    if ctx.channel.id == result[5]:
+        return True
+    return False
+
+
+def check_shop(ctx):
+    result = Guild.read(ctx.guild.id)
+    if ctx.channel.id == result[6]:
+        return True
+    return False
+
+
+def check_adventure(ctx):
+    result = Guild.read(ctx.guild.id)
+    if ctx.channel.id == result[7]:
+        return True
+    return False
+
+
 @bot.command(name='guilt_deploy', aliases=['gltdep'])
+@commands.check(check_admin)
 async def guilt_deploy(ctx):
     await on_guild_join(ctx.guild)
 
 
 @bot.command(name='guilt_remove', aliases=['gltrem'])
+@commands.check(check_admin)
 async def guilt_remove(ctx):
     await Guild.remove_all(ctx.guild)
+
+@bot.command(name='guilt_remove_soft', aliases=['gltrems'])
+@commands.check(check_admin)
+async def guilt_remove(ctx):
+    await Guild.remove_all(ctx.guild, soft=True)
 
 
 @bot.command(name='set_slowmode', aliases=['setslow'])
@@ -57,11 +82,11 @@ async def set_slowmode(ctx, time):
 
 
 @bot.command(name='stats')
+@commands.check(check_tavern)
 async def stats(ctx, stat_embed_ver=1):
     await check_player_in_game(ctx.author.id)
 
     current_char = Character.read(ctx.author.id)
-    print(current_char)
 
     embed_color = ctx.author.color
     if str(embed_color) == '#000000':

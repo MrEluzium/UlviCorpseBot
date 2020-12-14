@@ -34,7 +34,7 @@ class GuildControl:
         conn.commit()
         conn.close()
 
-    async def remove_all(self, guild):
+    async def remove_all(self, guild, soft=False):
         reason = 'Removing of RPG bot was caused. Deleting game zone.'
 
         # Get and delete guild data from DB
@@ -48,7 +48,15 @@ class GuildControl:
         [await guild.get_role(result[i]).delete(reason=reason) for i in range(1, 3)]  # Delete roles
         [await guild.get_channel(result[i]).delete(reason=reason) for i in range(7, 2, -1)]  # Delete channels amd category
 
-        await guild.leave()
+        if not soft:
+            await guild.leave()
+
+    def read(self, id):
+        conn = sqlite3.connect('data/Guilds.db')
+        cursor = conn.cursor()
+        result = cursor.execute(f"SELECT * FROM Guilds where id = {id};").fetchone()
+        conn.close()
+        return result
 
     async def set_slowmode(self, guild, time):
         conn = sqlite3.connect('data/Guilds.db')
