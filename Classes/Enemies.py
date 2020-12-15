@@ -32,7 +32,7 @@ class EnemyControl:
     def edit(self, name, column, new):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute(f"UPDATE Enemies SET {column} = {new} where name = {name};")
+        cursor.execute(f"UPDATE Enemies SET {column} = {new} where name = '{name}';")
         conn.commit()
         conn.close()
 

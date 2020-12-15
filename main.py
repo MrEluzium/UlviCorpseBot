@@ -87,6 +87,46 @@ async def set_slowmode(ctx, time):
     await Guild.set_slowmode(ctx.guild, time)
 
 
+@bot.command(name='edit_mob')
+@commands.check(check_admin)
+async def edit_mob(ctx):
+    data = ctx.message.content[9:].split()
+    name, column, new = data[0], data[1], data[2]
+    mob = Enemy.read(name)
+    if mob:
+        try:
+            Enemy.edit(name, column, new)
+        except sqlite3.OperationalError as e:
+            await ctx.send(f'> *{e}*')
+    else:
+        await ctx.send('> *Такого существа нет!*')
+
+
+@bot.command(name='get_mob_info', aliases=['mobinfo'])
+@commands.check(check_admin)
+async def get_mob_info(ctx):
+    command_len = 14 if 'get_mob_info' in ctx.message.content else 9
+    if len(ctx.message.content) < command_len:
+        await ctx.send('> *Введите имя существа!*')
+        return
+    mob = Enemy.read(ctx.message.content[command_len:].title())
+    if mob:
+        try:
+            await ctx.send(f'>>> **id:** *{mob[0]}*\n'
+                           f'**name:** *{mob[1]}*\n'
+                           f'**hp:** *{mob[2]}*\n'
+                           f'**power:** *{mob[3]}*\n'
+                           f'**exp:** *{mob[4]}*\n'
+                           f'**money:** *{mob[5]}*\n'
+                           f'**icon:** *{mob[6]}*\n'
+                           f'**color:** *{mob[7]}*\n')
+        except sqlite3.OperationalError as e:
+            await ctx.send(f'> *{e}*')
+    else:
+        await ctx.send('> *Такого существа нет!*')
+
+
+
 @bot.command(name='stats')
 @commands.check(check_tavern)
 async def stats(ctx, stat_embed_ver=2):
@@ -147,16 +187,18 @@ async def stats(ctx, stat_embed_ver=2):
 @commands.check(check_adventure)
 async def moblist(ctx):
     result = Enemy.get_all()
-    embed_list = list()
-    file_list = list()
-    for mob in result:
-        file, embed = Enemy.get_embed(mob)
-        embed_list.append(embed)
-        file_list.append(file)
-    print(file_list, embed_list)
-    mes = await ctx.send(file=file, embed=embed)
-    # page = Paginator(bot, mes, use_more=False, embeds=embed_list, use_images=True, images=file_list)
-    # await page.start()
+    names_list = list()
+    [names_list.append(mob[1]) for mob in result]
+
+    embed = discord.Embed(title='Доступные существа', description=" ", color=4631782)
+    embed_text = ""
+    for mob in names_list:
+        embed_text += f":diamond_shape_with_a_dot_inside: {mob}\n"
+    embed_text += "\n"
+    embed.add_field(
+        name=embed_text, value="Ипользуй /mob [имя]‌‌‍‍", inline=False)
+
+    await ctx.send(embed=embed)
 
 
 @bot.command(name='mob')
