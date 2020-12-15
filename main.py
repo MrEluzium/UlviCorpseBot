@@ -2,14 +2,17 @@ import discord
 import asyncio
 import sqlite3
 import progressbar
+from Cybernator import Paginator
 from discord import colour as dscolor
 from discord.ext import tasks, commands
 from os import name as os_name
 from Classes.Character import CharacterControl
 from Classes.Guild import GuildControl
+from Classes.Enemies import EnemyControl
 from settings import TOKEN
 Character = CharacterControl()
 Guild = GuildControl()
+Enemy = EnemyControl()
 bot = commands.Bot(command_prefix='/')
 
 
@@ -37,21 +40,24 @@ def check_admin(ctx):
     return False
 
 
-def check_tavern(ctx):
+async def check_tavern(ctx):
+    await check_player_in_game(ctx.author.id)
     result = Guild.read(ctx.guild.id)
     if ctx.channel.id == result[5]:
         return True
     return False
 
 
-def check_shop(ctx):
+async def check_shop(ctx):
+    await check_player_in_game(ctx.author.id)
     result = Guild.read(ctx.guild.id)
     if ctx.channel.id == result[6]:
         return True
     return False
 
 
-def check_adventure(ctx):
+async def check_adventure(ctx):
+    await check_player_in_game(ctx.author.id)
     result = Guild.read(ctx.guild.id)
     if ctx.channel.id == result[7]:
         return True
@@ -85,8 +91,6 @@ async def set_slowmode(ctx, time):
 @bot.command(name='stats')
 @commands.check(check_tavern)
 async def stats(ctx, stat_embed_ver=2):
-    await check_player_in_game(ctx.author.id)
-
     current_char = Character.read(ctx.author.id)
 
     embed_color = ctx.author.color
@@ -140,6 +144,23 @@ async def stats(ctx, stat_embed_ver=2):
     await ctx.send(embed=embed)
 
 
+@bot.command(name='moblist', aliases=['mobs'])
+@commands.check(check_adventure)
+async def moblist(ctx):
+    result = Enemy.get_all()
+    mob_list = list()
+    for mob in result:
+        file, embed = Enemy.get_embed(mob)
+    await ctx.send(file=file, embed=embed)
+
+
+@bot.command(name='top')
+@commands.check(check_tavern)
+async def top(ctx):
+    # TODO top
+    pass
+
+
 # Проверяем, участвет ли аккаунт в игре. Если нет, то создаем новоро персонажа.
 async def check_player_in_game(id):
     if not Character.read(id):
@@ -152,9 +173,9 @@ async def author(ctx):
                           color=0xb04e5d)
     # embed.set_author(name="Author credits", url="https://eluzium.aqulas.me/")
     embed.add_field(name='Click on text above', value='luv u <3', inline=True)
-    embed.set_thumbnail(
-        url="https://sun9-69.userapi.com/impg/zDUbasmgtvggnwzK3l4L1X8ROTIhDxlQsag_kw/8BEPkbxDLpI.jpg?size=2000x2000&quality=96&proxy=1&sign=4d03032587f489432461109024f8bf2e&type=album")
-    await ctx.send(embed=embed)
+    file = discord.File("data/pictures/Author.jpg")
+    embed.set_thumbnail(url="attachment://Author.jpg")
+    await ctx.send(file=file, embed=embed)
 
 
 bot.run(TOKEN)

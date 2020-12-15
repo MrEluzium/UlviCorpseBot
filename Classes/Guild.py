@@ -2,7 +2,7 @@
 import sqlite3
 import discord
 from discord import colour, permissions
-import asyncio
+db_path = 'data/databases/Guilds.db'
 
 
 class GuildControl:
@@ -28,7 +28,7 @@ class GuildControl:
         shop_channel = await guild.create_text_channel('Рынок', category=category, reason=reason, slowmode_delay=3, overwrites=player_overwrites)
         adventure_channel = await guild.create_text_channel('Приключения', category=category, reason=reason, slowmode_delay=3, overwrites=player_overwrites)
 
-        conn = sqlite3.connect('data/databases/Guilds.db')
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         cursor.execute(f"INSERT INTO Guilds VALUES('{guild.id}', {admin_role.id}, {player_role.id}, {category.id}, {admin_channel.id}, {tavern_channel.id}, {shop_channel.id}, {adventure_channel.id});")
         conn.commit()
@@ -38,7 +38,7 @@ class GuildControl:
         reason = 'Removing of RPG bot was caused. Deleting game zone.'
 
         # Get and delete guild data from DB
-        conn = sqlite3.connect('data/databases/Guilds.db')
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         result = cursor.execute(f"SELECT * FROM Guilds where id = {guild.id};").fetchone()
         cursor.execute(f"DELETE FROM Guilds where id = {guild.id};")
@@ -52,14 +52,14 @@ class GuildControl:
             await guild.leave()
 
     def read(self, id):
-        conn = sqlite3.connect('data/databases/Guils.db')
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         result = cursor.execute(f"SELECT * FROM Guilds where id = {id};").fetchone()
         conn.close()
         return result
 
     async def set_slowmode(self, guild, time):
-        conn = sqlite3.connect('data/databases/Guilds.db')
+        conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         result = cursor.execute(f"SELECT * FROM Guilds where id = {guild.id};").fetchone()
         conn.close()
