@@ -5,6 +5,7 @@ import progressbar
 from discord import colour as dscolor
 from discord.ext import tasks, commands
 from os import name as os_name
+from Classes.Paginator import Paginator
 from Classes.Character import CharacterControl
 from Classes.Guild import GuildControl
 from Classes.Enemies import EnemyControl
@@ -183,6 +184,41 @@ async def stats(ctx, stat_embed_ver=2):
     await ctx.send(embed=embed)
 
 
+@bot.command(name='top')
+@commands.check(check_tavern)
+async def top(ctx):
+    count = 5
+    rating = Character.get_by_exp()
+    max = len(rating) - 1
+    embeds = list()
+
+    embed_main = discord.Embed(title='Рейтинг игроков', description=" ", color=16104960)
+    embed_main.set_thumbnail(url=bot.get_user(rating[0][0]).avatar_url)
+    embed_main.add_field(name=f":star:{rating[0][3]}  •  :crossed_swords: {rating[0][7]}",
+                    value=f"**1. {bot.get_user(rating[0][0]).mention}**", inline=False)
+
+    for i in range(1, 5 if max >= 5 else max + 1):
+        embed_main.add_field(name=f":star:{rating[i][3]}  •  :crossed_swords: {rating[i][7]}",
+                        value=f"{i+1}. {bot.get_user(rating[i][0]).mention}", inline=False)
+    embeds.append(embed_main)
+
+    embed = discord.Embed(title='Рейтинг игроков', description=" ", color=16104960)
+    for player in rating[5:]:
+        embed.add_field(name=f":star:{player[3]}  •  :crossed_swords: {player[7]}",
+                        value=f"{count+1}. {bot.get_user(player[0]).mention}", inline=False)
+        if count == max:
+            embeds.append(embed)
+            break
+        if (count + 1) % 5 == 0:
+            embeds.append(embed)
+            embed = discord.Embed(title='Рейтинг игроков', description=" ", color=16104960)
+        count += 1
+
+    message = await ctx.send(embed=embed_main)
+    page = Paginator(bot, message, use_more=False, embeds=embeds)
+    await page.start()
+
+
 @bot.command(name='moblist', aliases=['mobs'])
 @commands.check(check_adventure)
 async def moblist(ctx):
@@ -213,13 +249,6 @@ async def mob(ctx):
         await ctx.send(file=file, embed=embed)
     else:
         await ctx.send('> *Такого существа нет!*')
-
-
-@bot.command(name='top')
-@commands.check(check_tavern)
-async def top(ctx):
-    # TODO top
-    pass
 
 
 # Проверяем, участвет ли аккаунт в игре. Если нет, то создаем новоро персонажа.
