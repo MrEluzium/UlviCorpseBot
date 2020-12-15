@@ -2,7 +2,6 @@ import discord
 import asyncio
 import sqlite3
 import progressbar
-from Cybernator import Paginator
 from discord import colour as dscolor
 from discord.ext import tasks, commands
 from os import name as os_name
@@ -148,10 +147,30 @@ async def stats(ctx, stat_embed_ver=2):
 @commands.check(check_adventure)
 async def moblist(ctx):
     result = Enemy.get_all()
-    mob_list = list()
+    embed_list = list()
+    file_list = list()
     for mob in result:
         file, embed = Enemy.get_embed(mob)
-    await ctx.send(file=file, embed=embed)
+        embed_list.append(embed)
+        file_list.append(file)
+    print(file_list, embed_list)
+    mes = await ctx.send(file=file, embed=embed)
+    # page = Paginator(bot, mes, use_more=False, embeds=embed_list, use_images=True, images=file_list)
+    # await page.start()
+
+
+@bot.command(name='mob')
+@commands.check(check_adventure)
+async def mob(ctx):
+    if len(ctx.message.content) < 5:
+        await ctx.send('> *Введите имя существа!*')
+        return
+    mob = Enemy.read(ctx.message.content[5:].title())
+    if mob:
+        file, embed = Enemy.get_embed(mob)
+        await ctx.send(file=file, embed=embed)
+    else:
+        await ctx.send('> *Такого существа нет!*')
 
 
 @bot.command(name='top')
