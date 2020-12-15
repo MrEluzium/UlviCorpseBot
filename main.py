@@ -58,21 +58,21 @@ def check_adventure(ctx):
     return False
 
 
-@bot.command(name='guilt_deploy', aliases=['gltdep'])
-async def guilt_deploy(ctx):
+@bot.command(name='guild_deploy', aliases=['glddep'])
+async def guild_deploy(ctx):
     if Guild.read(ctx.guild.id) is None:
         await on_guild_join(ctx.guild)
 
 
-@bot.command(name='guilt_remove', aliases=['gltrem'])
+@bot.command(name='guild_remove', aliases=['gldrem'])
 @commands.check(check_admin)
-async def guilt_remove(ctx):
+async def guild_remove(ctx):
     await Guild.remove_all(ctx.guild)
 
 
-@bot.command(name='guilt_remove_soft', aliases=['gltrems'])
+@bot.command(name='guild_remove_soft', aliases=['gldrems'])
 @commands.check(check_admin)
-async def guilt_remove(ctx):
+async def guild_remove(ctx):
     await Guild.remove_all(ctx.guild, soft=True)
 
 
