@@ -227,7 +227,6 @@ class Paginator:
             self.embeds[self.index][self.index_page].colour = self.color
 
         if self.use_images:
-            print(type(self.use_images))
             return await self.message.edit(file=self.images[self.index][self.index_page], embed=self.embeds[self.index][self.index_page])
         else:
             return await self.message.edit(embed=self.embeds[self.index][self.index_page])

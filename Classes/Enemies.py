@@ -5,13 +5,13 @@ db_path = 'data/databases/Enemies.db'
 
 
 class EnemyControl:
-    def create(self, name, hp, power, exp, money, icon=None):
+    def create(self, name, bowed_name, hp, power, exp, money, icon=None):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         if icon:
-            cursor.execute(f"INSERT INTO Enemies(name, hp, power, exp, money, icon) VALUES('{name}', {hp}, {power}, {exp}, {money}, '{icon}');")
+            cursor.execute(f"INSERT INTO Enemies(name, bowed_name, hp, power, exp, money, icon) VALUES('{name}', '{bowed_name}', {hp}, {power}, {exp}, {money}, '{icon}');")
         else:
-            cursor.execute(f"INSERT INTO Enemies(name, hp, power, exp, money) VALUES('{name}', {hp}, {power}, {exp}, {money});")
+            cursor.execute(f"INSERT INTO Enemies(name, bowed_name, hp, power, exp, money) VALUES('{name}', '{bowed_name}', {hp}, {power}, {exp}, {money});")
         conn.commit()
         conn.close()
 
@@ -37,7 +37,7 @@ class EnemyControl:
         conn.close()
 
     def get_embed(self, mob: tuple):
-        name, hp, power, exp, money, icon, color = mob[1], mob[2], mob[3], mob[4], mob[5], mob[6], int(mob[7])
+        name, hp, power, exp, money, icon, color = mob[1], mob[3], mob[4], mob[5], mob[6], mob[7], int(mob[8])
         file = None
         embed = Embed(title=name, description=" ", color=color) if color else Embed(title=name, description=" ")
 

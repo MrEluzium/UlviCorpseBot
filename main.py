@@ -115,12 +115,13 @@ async def get_mob_info(ctx):
         try:
             await ctx.send(f'>>> **id:** *{mob[0]}*\n'
                            f'**name:** *{mob[1]}*\n'
-                           f'**hp:** *{mob[2]}*\n'
-                           f'**power:** *{mob[3]}*\n'
-                           f'**exp:** *{mob[4]}*\n'
-                           f'**money:** *{mob[5]}*\n'
-                           f'**icon:** *{mob[6]}*\n'
-                           f'**color:** *{mob[7]}*\n')
+                           f'**bowed_name:** *{mob[2]}*\n'
+                           f'**hp:** *{mob[3]}*\n'
+                           f'**power:** *{mob[4]}*\n'
+                           f'**exp:** *{mob[5]}*\n'
+                           f'**money:** *{mob[6]}*\n'
+                           f'**icon:** *{mob[7]}*\n'
+                           f'**color:** *{mob[8]}*\n')
         except sqlite3.OperationalError as e:
             await ctx.send(f'> *{e}*')
     else:
@@ -243,10 +244,49 @@ async def mob(ctx):
     if len(ctx.message.content) < 5:
         await ctx.send('> *Введите имя существа!*')
         return
+
     mob = Enemy.read(ctx.message.content[5:].title())
     if mob:
         file, embed = Enemy.get_embed(mob)
         await ctx.send(file=file, embed=embed)
+
+    else:
+        await ctx.send('> *Такого существа нет!*')
+
+
+@bot.command(name='fight')
+@commands.check(check_adventure)
+async def fight(ctx):
+    if len(ctx.message.content) < 7:
+        await ctx.send('> *Введите имя существа!*')
+        return
+
+    mob = Enemy.read(ctx.message.content[7:].title())
+    if mob:
+        mob_name, mob_bowed_name, mob_exp, mob_power, mob_hp, mob_money, mob_icon, mob_color = mob[1], mob[2], mob[3], mob[4], mob[5], mob[6], mob[7], int(mob[8])
+        player = Character.read(ctx.author.id)
+        player_hp, player_power = player[5], player[7]
+        file = None
+
+        embed = discord.Embed(title=f"Начался бой с {mob_bowed_name}", description=" ", color=mob_color) if mob_color else discord.Embed(title=f"Начался бой с {mob_bowed_name}", description=" ")
+        if mob_icon:
+            file = discord.File(f"data/pictures/{mob_icon}")
+            embed.set_thumbnail(url=f"attachment://{mob_icon}")
+        embed.add_field(
+            name=f"{mob_name}:\n:heart: {mob_hp}  •  :crossed_swords: {mob_power}\n\n"
+                 f"Вы:\n:heart: {player_hp}  •  :crossed_swords: {player_power}\n",
+            value=" ‌‌‍‍", inline=False)
+        message = await ctx.send(file=file, embed=embed)
+
+        print(player[5], mob[3])
+        await asyncio.sleep(1)
+        if player[5] > mob[3]:
+            await ctx.send('Win')
+        else:
+            await ctx.send('Lose')
+
+
+
     else:
         await ctx.send('> *Такого существа нет!*')
 
