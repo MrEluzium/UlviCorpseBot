@@ -2,17 +2,19 @@ import discord
 import asyncio
 import sqlite3
 import progressbar
-from discord import colour as dscolor
 from discord.ext import tasks, commands
 from os import name as os_name
 from Classes.Paginator import Paginator
 from Classes.Character import CharacterControl
-from Classes.Guild import GuildControl
 from Classes.Enemies import EnemyControl
+from Classes.Guild import GuildControl
+from Classes.Shop import ShopControl
 from settings import TOKEN
 Character = CharacterControl()
 Guild = GuildControl()
 Enemy = EnemyControl()
+Armour = ShopControl('Armours')
+Weapon = ShopControl('Weapons')
 bot = commands.Bot(command_prefix='/')
 
 
@@ -136,10 +138,10 @@ async def stats(ctx, stat_embed_ver=2):
 
     embed_color = ctx.author.color
     if str(embed_color) == '#000000':
-        embed_color = dscolor.Colour(16777214)
+        embed_color = discord.colour.Colour(16777214)
 
+    embed = discord.Embed(color=embed_color)
     if stat_embed_ver == 0:
-        embed = discord.Embed(color=embed_color)
         embed.set_thumbnail(url=ctx.author.avatar_url)
         embed.add_field(name=f"**Профиль игрока**", value=ctx.author.mention, inline=False)
 
@@ -158,7 +160,6 @@ async def stats(ctx, stat_embed_ver=2):
                         value="    ‌‌‍‍", inline=True)
 
     elif stat_embed_ver == 1:
-        embed = discord.Embed(color=embed_color)
         embed.set_thumbnail(url=ctx.author.avatar_url)
         embed.add_field(name=f"**Профиль игрока**",
                         value=ctx.author.mention, inline=False)
@@ -171,7 +172,6 @@ async def stats(ctx, stat_embed_ver=2):
             value="    ‌‌‍‍", inline=False)
 
     elif stat_embed_ver == 2:
-        embed = discord.Embed(color=embed_color)
         embed.set_thumbnail(url=ctx.author.avatar_url)
         embed.add_field(name=f"**Профиль игрока**",
                         value=ctx.author.mention, inline=False)
@@ -271,7 +271,6 @@ async def fight(ctx):
         file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power, '...')
         message = await ctx.send(file=file, embed=embed)
 
-        print(player[5], mob[3])
         await asyncio.sleep(0.7)
         if player[5] > mob[3]:
             file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power,
@@ -302,6 +301,38 @@ async def get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon,
         name=f"{text}",
         value=" ‌‌‍‍", inline=False)
     return file, embed
+
+
+@bot.command(name='buy')
+@commands.check(check_shop)
+async def buy(ctx):
+    types = ['Weapon', 'Armor', 'Armour']
+    context = ctx.message.content.split()
+    print(context)
+
+    if len(context) == 1:
+        # TODO Сообщение о пусто запросе в магазин
+        return
+
+    if context[1].title() not in types:
+        # TODO Сообщение о неправильном запросе в магазин
+        return
+    else:
+        type = 'Weapons' if context[1].title() == 'Weapon' else 'Armours'
+        controller = Weapon if context[1].title() == 'Weapon' else Armour
+
+    item_name = ""
+    for word in context[2:]:
+        item_name += word + " "
+    item_name = item_name.rstrip()
+
+    print(item_name)
+    item = controller.read(item_name)
+    if item:
+        print(item_name)
+
+    else:
+        await ctx.send('> *Такого существа нет!*')
 
 
 # Проверяем, участвет ли аккаунт в игре. Если нет, то создаем новоро персонажа.
