@@ -37,7 +37,7 @@ class EnemyControl:
         conn.close()
 
     def get_embed(self, mob: tuple):
-        name, hp, power, exp, money, icon, color = mob[1], mob[3], mob[4], mob[5], mob[6], mob[7], int(mob[8])
+        name, exp, power, hp, money, icon, color = mob[1], mob[3], mob[4], mob[5], mob[6], mob[7], int(mob[8])
         file = None
         embed = Embed(title=name, description=" ", color=color) if color else Embed(title=name, description=" ")
 

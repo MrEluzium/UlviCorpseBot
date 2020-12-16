@@ -266,29 +266,41 @@ async def fight(ctx):
         mob_name, mob_bowed_name, mob_exp, mob_power, mob_hp, mob_money, mob_icon, mob_color = mob[1], mob[2], mob[3], mob[4], mob[5], mob[6], mob[7], int(mob[8])
         player = Character.read(ctx.author.id)
         player_hp, player_power = player[5], player[7]
-        file = None
 
-        embed = discord.Embed(title=f"Начался бой с {mob_bowed_name}", description=" ", color=mob_color) if mob_color else discord.Embed(title=f"Начался бой с {mob_bowed_name}", description=" ")
-        if mob_icon:
-            file = discord.File(f"data/pictures/{mob_icon}")
-            embed.set_thumbnail(url=f"attachment://{mob_icon}")
-        embed.add_field(
-            name=f"{mob_name}:\n:heart: {mob_hp}  •  :crossed_swords: {mob_power}\n\n"
-                 f"Вы:\n:heart: {player_hp}  •  :crossed_swords: {player_power}\n",
-            value=" ‌‌‍‍", inline=False)
+        file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon,mob_color, player_hp, player_power, '...')
         message = await ctx.send(file=file, embed=embed)
 
         print(player[5], mob[3])
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.7)
         if player[5] > mob[3]:
-            await ctx.send('Win')
+            file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power,
+                                                f'__Вы успешно победили врага__\nВаша награда: :star:{mob_exp}  •  :coin:{mob_money}')
+            await message.edit(embed=embed)
         else:
-            await ctx.send('Lose')
-
-
+            file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power,
+                                                f'no')
+            await message.edit(embed=embed)
 
     else:
         await ctx.send('> *Такого существа нет!*')
+
+
+async def get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon,mob_color, player_hp, player_power, text):
+    file = None
+    embed = discord.Embed(title=f"Начался бой с {mob_bowed_name}", description=" ",
+                          color=mob_color) if mob_color else discord.Embed(title=f"Начался бой с {mob_bowed_name}",
+                                                                           description=" ")
+    if mob_icon:
+        file = discord.File(f"data/pictures/{mob_icon}")
+        embed.set_thumbnail(url=f"attachment://{mob_icon}")
+    embed.add_field(
+        name=f"{mob_name}:\n:heart: {mob_hp}  •  :crossed_swords: {mob_power}\n"
+             f"Вы:\n:heart: {player_hp}  •  :crossed_swords: {player_power}\n",
+        value=" ‌‌‍‍", inline=False)
+    embed.add_field(
+        name=f"{text}",
+        value=" ‌‌‍‍", inline=False)
+    return file, embed
 
 
 # Проверяем, участвет ли аккаунт в игре. Если нет, то создаем новоро персонажа.
