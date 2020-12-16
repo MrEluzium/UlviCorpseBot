@@ -37,13 +37,14 @@ class EnemyControl:
         conn.close()
 
     def get_embed(self, mob: tuple):
-        name, exp, power, hp, money, icon, color = mob[1], mob[3], mob[4], mob[5], mob[6], mob[7], int(mob[8])
+        name, exp, power, hp, money = mob[1], mob[3], mob[4], mob[5], mob[6]
+        color = int(mob[8]) if mob[8] else None
         file = None
         embed = Embed(title=name, description=" ", color=color) if color else Embed(title=name, description=" ")
 
-        if icon:
-            file = File(f"data/pictures/{icon}")
-            embed.set_thumbnail(url=f"attachment://{icon}")
+        if mob[7]:  # icon
+            file = File(f"data/pictures/{mob[7]}")
+            embed.set_thumbnail(url=f"attachment://{mob[7]}")
         embed.add_field(
             name=f":heart: Здоровье    {hp}\n"
                  f":crossed_swords: Сила              {power}\n"

@@ -263,11 +263,12 @@ async def fight(ctx):
 
     mob = Enemy.read(ctx.message.content[7:].title())
     if mob:
-        mob_name, mob_bowed_name, mob_exp, mob_power, mob_hp, mob_money, mob_icon, mob_color = mob[1], mob[2], mob[3], mob[4], mob[5], mob[6], mob[7], int(mob[8])
+        mob_name, mob_bowed_name, mob_exp, mob_power, mob_hp, mob_money, mob_icon = mob[1], mob[2], mob[3], mob[4], mob[5], mob[6], mob[7]
+        mob_color = int(mob[8]) if mob[8] else None
         player = Character.read(ctx.author.id)
         player_hp, player_power = player[5], player[7]
 
-        file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon,mob_color, player_hp, player_power, '...')
+        file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power, '...')
         message = await ctx.send(file=file, embed=embed)
 
         print(player[5], mob[3])
@@ -285,11 +286,11 @@ async def fight(ctx):
         await ctx.send('> *Такого существа нет!*')
 
 
-async def get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon,mob_color, player_hp, player_power, text):
+async def get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power, text):
     file = None
-    embed = discord.Embed(title=f"Начался бой с {mob_bowed_name}", description=" ",
-                          color=mob_color) if mob_color else discord.Embed(title=f"Начался бой с {mob_bowed_name}",
-                                                                           description=" ")
+    embed = discord.Embed(title=f"Начался бой с {mob_bowed_name}", description=" ", color=mob_color)\
+        if mob_color else discord.Embed(title=f"Начался бой с {mob_bowed_name}", description=" ")
+
     if mob_icon:
         file = discord.File(f"data/pictures/{mob_icon}")
         embed.set_thumbnail(url=f"attachment://{mob_icon}")
