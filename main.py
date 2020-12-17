@@ -215,10 +215,20 @@ async def stats(ctx):
     embed.set_thumbnail(url=ctx.author.avatar_url)
     embed.add_field(name=f"**Профиль игрока**",
                     value=ctx.author.mention, inline=False)
+
+    health = f":heart: Здоровье    {player[5]} | {player[6]}\n"
+    if player[10]:
+        d1 = datetime.strptime(player[10], "%Y-%m-%d %H:%M:%S.%f")
+        d2 = datetime.now()
+        delta = d2 - d1
+        delta = delta.total_seconds()
+
+        health = f":heart: Здоровье    {player[5]} | {player[6]} ({await get_delta(delta)})\n"
+
     embed.add_field(
         name=f"**:crown: Уровень       {player[1]} \n"
              f":star: Опыт             {player[2]} | {player[4]} \n"
-             f":heart: Здоровье    {player[5]} | {player[6]}\n"
+             f"{health}"
              f":crossed_swords: Сила               {player[7]}\n"
              f":coin: Монеты       {player[8]}**",
         value=" ‌‌‍‍", inline=False)
