@@ -354,7 +354,7 @@ async def fight(ctx):
             Character.set_stat(player_id, 'fullexp', player_full_exp + mob_exp)
             Character.set_stat(player_id, 'money', player_money + mob_money)
 
-            if player_full_exp + mob_exp >= player_expmax:
+            if player_exp + mob_exp >= player_expmax:
                 Character.set_stat(player_id, 'exp', 0)
                 Character.set_stat(player_id, 'lvl', player_lvl+1)
                 Character.set_stat(player_id, 'expmax', player_expmax*2)
@@ -374,8 +374,6 @@ async def fight(ctx):
                 file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power,
                                                     f'__Вы успешно победили врага__\nВаша награда: :star:{mob_exp}  •  :coin:{mob_money}')
             await message.edit(embed=embed)
-
-
 
         elif winner == 'mob':
             Character.set_stat(player_id, 'hp', 0)
