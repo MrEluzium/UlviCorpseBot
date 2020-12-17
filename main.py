@@ -1,3 +1,4 @@
+# enable SERVER MEMBERS INTENT bot settings in the Discord developer portal
 import discord
 import asyncio
 import sqlite3
@@ -16,7 +17,9 @@ Guild = GuildControl()
 Enemy = EnemyControl()
 Armour = ShopControl('Armours')
 Weapon = ShopControl('Weapons')
-bot = commands.Bot(command_prefix='/')
+intents = discord.Intents.default()
+intents.members = True
+bot = commands.Bot(command_prefix='/', intents=intents)
 
 
 @bot.event
@@ -243,21 +246,20 @@ async def top(ctx):
     rating = Character.get_by_exp()
     max = len(rating) - 1
     embeds = list()
-
     embed_main = discord.Embed(title='Рейтинг игроков', description=" ", color=16104960)
-    embed_main.set_thumbnail(url=bot.get_user(rating[0][0]).avatar_url)
+    embed_main.set_thumbnail(url=ctx.message.guild.get_member(rating[0][0]).avatar_url)
     embed_main.add_field(name=f":crown: {rating[0][1]}  •  :crossed_swords: {rating[0][7]}",
-                         value=f"**1. {bot.get_user(rating[0][0]).mention}**", inline=False)
+                         value=f"**1. {ctx.message.guild.get_member(rating[0][0]).mention}**", inline=False)
 
     for i in range(1, 5 if max >= 5 else max + 1):
         embed_main.add_field(name=f":crown: {rating[i][1]}  •  :crossed_swords: {rating[i][7]}",
-                             value=f"{i+1}. {bot.get_user(rating[i][0]).mention}", inline=False)
+                             value=f"{i+1}. {ctx.message.guild.get_member(rating[i][0]).mention}", inline=False)
     embeds.append(embed_main)
 
     embed = discord.Embed(title='Рейтинг игроков', description=" ", color=16104960)
     for player in rating[5:]:
         embed.add_field(name=f":crown: {player[1]}  •  :crossed_swords: {player[7]}",
-                        value=f"{count+1}. {bot.get_user(player[0]).mention}", inline=False)
+                        value=f"{count+1}. {ctx.message.guild.get_member(player[0]).mention}", inline=False)
         if count == max:
             embeds.append(embed)
             break
@@ -315,21 +317,27 @@ async def fight(ctx):
 
     mob = Enemy.read(context[1].title())
     if mob:
-        mob_name, mob_bowed_name, mob_exp, mob_power, mob_hp, mob_money, mob_icon = mob[1], mob[2], mob[3], mob[4], mob[5], mob[6], mob[7]
+        mob_name, mob_bowed_name, mob_exp, mob_power, mob_hp, mob_money, mob_icon =\
+            mob[1], mob[2], mob[3], mob[4], mob[5], mob[6], mob[7]
+
         mob_color = int(mob[8]) if mob[8] else None
         player = Character.read(ctx.author.id)
-        player_id, player_exp, player_full_exp, player_hp, player_power, player_money = player[0], player[2], player[3], player[5], player[7], player[8]
+
+        player_id, player_lvl, player_exp, player_full_exp, player_expmax, player_hp, player_hp_max, player_power, player_money =\
+            player[0], player[1], player[2], player[3], player[4], player[5], player[6], player[7], player[8]
 
         file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power, '...')
         message = await ctx.send(file=file, embed=embed)
 
         await asyncio.sleep(0.5)
 
+        new_level = False
         winner = None
         count = 0
         battle_mob_hp = mob_hp
         battle_player_hp = player_hp
         while count < 300:
+            print(battle_player_hp)
             battle_mob_hp -= player_power
             if battle_mob_hp <= 0:
                 winner = 'player'
@@ -339,16 +347,35 @@ async def fight(ctx):
                 winner = 'mob'
                 break
 
-        Character.set_stat(player_id, 'battle_time', str(datetime.now()))
+        if battle_player_hp < player_hp_max:
+            Character.set_stat(player_id, 'battle_time', str(datetime.now()))
         if winner == 'player':
             Character.set_stat(player_id, 'hp', battle_player_hp)
-            Character.set_stat(player_id, 'exp', player_exp+mob_exp)
             Character.set_stat(player_id, 'fullexp', player_full_exp + mob_exp)
-            Character.set_stat(player_id, 'money', player_money+mob_money)
+            Character.set_stat(player_id, 'money', player_money + mob_money)
 
-            file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power,
-                                                f'__Вы успешно победили врага__\nВаша награда: :star:{mob_exp}  •  :coin:{mob_money}')
+            if player_full_exp + mob_exp >= player_expmax:
+                Character.set_stat(player_id, 'exp', 0)
+                Character.set_stat(player_id, 'lvl', player_lvl+1)
+                Character.set_stat(player_id, 'expmax', player_expmax*2)
+                Character.set_stat(player_id, 'hpmax', player_hp_max+25)
+                Character.set_stat(player_id, 'power', player_power+5)
+                if battle_player_hp == player_hp_max:
+                    Character.set_stat(player_id, 'hp', player_hp_max + 25)
+                new_level = True
+            else:
+                Character.set_stat(player_id, 'exp', player_exp + mob_exp)
+
+            if new_level:
+                file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color,
+                                                    player_hp, player_power,
+                                                    f'__Вы успешно победили врага__\nВаша награда: :star:{mob_exp}  •  :coin:{mob_money}', level=True)
+            else:
+                file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power,
+                                                    f'__Вы успешно победили врага__\nВаша награда: :star:{mob_exp}  •  :coin:{mob_money}')
             await message.edit(embed=embed)
+
+
 
         elif winner == 'mob':
             Character.set_stat(player_id, 'hp', 0)
@@ -356,13 +383,13 @@ async def fight(ctx):
             file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color,
                                                 player_hp, player_power,
                                                 f'__Вы не сумели победить врага__\n:heart: Ваше здоровье на нуле\n:clock4: Время восстановления: 15 минут')
-            await message.edit(embed=embed)
+            await ctx.send(embed=embed)
 
     else:
         await ctx.send('> *Такого существа нет!*')
 
 
-async def get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power, text, add_hp=None):
+async def get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power, text, level=None):
     file = None
     embed = discord.Embed(title=f"Начался бой с {mob_bowed_name}", description=" ", color=mob_color)\
         if mob_color else discord.Embed(title=f"Начался бой с {mob_bowed_name}", description=" ")
@@ -377,9 +404,9 @@ async def get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon,
     embed.add_field(
         name=f"{text}",
         value=" ‌‌‍‍", inline=False)
-    if add_hp:
+    if level:
         embed.add_field(
-            name=f"У вас осталось :heart:{add_hp}",
+            name=f"Вы получили новый уровень!",
             value=" ‌‌‍‍", inline=False)
     return file, embed
 
