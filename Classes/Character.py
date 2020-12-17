@@ -7,7 +7,7 @@ class CharacterControl:
     def create(self, id):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute(f"INSERT INTO Characters(id, lvl, exp, fullexp, expmax, hp, hpmax, power, money) VALUES('{id}', 1, 0, 0, 240, 100, 100, 1, 0);")
+        cursor.execute(f"INSERT INTO Characters(id, lvl, exp, fullexp, expmax, hp, hpmax, power, money) VALUES('{id}', 1, 0, 0, 240, 50, 50, 1, 0);")
         conn.commit()
         conn.close()
 
