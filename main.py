@@ -129,7 +129,7 @@ async def edit_mob(ctx):
                                f'**color:** *{mob[8]}*\n')
             except sqlite3.IntegrityError as e:
                 await ctx.send(f'> *{e}*')
-            except sqlite3.OperationalError or sqlite3.IntegrityError as e:
+            except sqlite3.OperationalError as e:
                 await ctx.send(f'> *{e}*')
         else:
             await ctx.send('> *Такого существа нет!*')
@@ -148,6 +148,8 @@ async def remove_mob(ctx):
         try:
             Enemy.remove(name)
             await ctx.send('> *Готово!*')
+        except sqlite3.IntegrityError as e:
+            await ctx.send(f'> *{e}*')
         except sqlite3.OperationalError as e:
             await ctx.send(f'> *{e}*')
 
@@ -182,6 +184,8 @@ async def create_mob(ctx):
                        f'**money:** *{mob[6]}*\n'
                        f'**icon:** *{mob[7]}*\n'
                        f'**color:** *{mob[8]}*\n')
+    except sqlite3.IntegrityError as e:
+        await ctx.send(f'> *{e}*')
     except sqlite3.OperationalError as e:
         await ctx.send(f'> *{e}*')
 
@@ -227,7 +231,7 @@ async def add_shop_item(ctx):
     try:
         stat, price = int(context[-2]), int(context[-1])
         name = " ".join(context[2:-2])
-        if context[1] == "Weapon":
+        if context[1].title() == "Weapon":
             Weapon.create(name, stat, price)
             await ctx.send(f'>>> Готово!\n*name: {name}\npower: {stat}\nprice: {price}*')
         else:
@@ -235,6 +239,58 @@ async def add_shop_item(ctx):
             await ctx.send(f'>>> Готово!\n*name: {name}\nprotection: {stat}\nprice: {price}*')
     except ValueError:
         await ctx.send('> *Неверный синтаксис команды!*')
+
+
+@bot.command(name='edit_shop_item', aliases=['edititem'])
+@commands.check(check_admin)
+async def edit_shop_item(ctx):
+    types = ['Weapon', 'Armor', 'Armour']
+    stats = ['name', 'power', 'protection', 'price']
+    context = ctx.message.content.split()
+
+    if len(context) < 5:
+        await ctx.send('> *Введены не все параметры!*')
+        return
+    if context[1].title() not in types:
+        await ctx.send('> *Введен неверный тип предмета! (Weapon/Armour)*')
+        return
+
+    editing_stat = None
+    for elem in context:
+        if elem in stats:
+            editing_stat = elem
+            break
+    if editing_stat:
+        try:
+            stat_pos = context.index(editing_stat)
+            name, new = " ".join(context[2:stat_pos]), " ".join(context[stat_pos+1:])
+            if context[1].title() == "Weapon":
+                item = Weapon.read(name)
+                if item:
+                    Weapon.set_stat(name, editing_stat, new)
+                    await ctx.send(f'>>> *Готово!*')
+                else:
+                    await ctx.send(f'>>> *Неверное имя предмета!*')
+                    return
+            else:
+                item = Armour.read(name)
+                if item:
+                    Armour.set_stat(name, editing_stat, new)
+                    await ctx.send(f'>>> *Готово!*')
+                else:
+                    await ctx.send(f'>>> *Неверное имя предмета!*')
+                    return
+            if editing_stat == 'name':
+                item = Weapon.read(new)
+            else:
+                item = Weapon.read(name)
+            await ctx.send(f'>>> *name: {item[1]}\nprotection: {item[2]}\nprice: {item[3]}*')
+        except sqlite3.IntegrityError as e:
+            await ctx.send(f'> *{e}*')
+        except sqlite3.OperationalError as e:
+            await ctx.send(f'> *{e}*')
+    else:
+        await ctx.send('> *Введен неверный тип статы для изменения! (name/power/protection/price)*')
 
 
 @bot.command(name='stats')
