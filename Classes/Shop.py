@@ -28,10 +28,3 @@ class ShopControl:
         cursor.execute(f"UPDATE {self.type} SET {column} = {new} where name = '{name}';")
         conn.commit()
         conn.close()
-
-    # def get_by_exp(self):
-    #     conn = sqlite3.connect(db_path)
-    #     cursor = conn.cursor()
-    #     result = cursor.execute(f"SELECT * FROM Items ORDER BY fullexp DESC;").fetchall()
-    #     conn.close()
-    #     return result

@@ -93,16 +93,85 @@ async def set_slowmode(ctx, time):
 @bot.command(name='edit_mob')
 @commands.check(check_admin)
 async def edit_mob(ctx):
-    data = ctx.message.content[9:].split()
-    name, column, new = data[0], data[1], data[2]
-    mob = Enemy.read(name)
-    if mob:
+    context = ctx.message.content.split()
+
+    if len(context) < 4:
+        await ctx.send('> *Введены не все параметры!*')
+        return
+    else:
+        name, column, new = context[1], context[2], context[3]
+        mob = Enemy.read(name)
+        if mob:
+            try:
+                Enemy.edit(name, column, new)
+                await ctx.send('> *Готово!*')
+                mob = Enemy.read(context[1])
+                await ctx.send(f'>>> **id:** *{mob[0]}*\n'
+                                f'**name:** *{mob[1]}*\n'
+                                f'**bowed_name:** *{mob[2]}*\n'
+                                f'**hp:** *{mob[3]}*\n'
+                                f'**power:** *{mob[4]}*\n'
+                                f'**exp:** *{mob[5]}*\n'
+                                f'**money:** *{mob[6]}*\n'
+                                f'**icon:** *{mob[7]}*\n'
+                                f'**color:** *{mob[8]}*\n')
+            except sqlite3.IntegrityError as e:
+                await ctx.send(f'> *{e}*')
+            except sqlite3.OperationalError or sqlite3.IntegrityError as e:
+                await ctx.send(f'> *{e}*')
+        else:
+            await ctx.send('> *Такого существа нет!*')
+
+
+@bot.command(name='remove_mob')
+@commands.check(check_admin)
+async def remove_mob(ctx):
+    context = ctx.message.content.split()
+
+    if len(context) < 2:
+        await ctx.send('> *Введите имя моба!*')
+        return
+    else:
+        name = context[1]
         try:
-            Enemy.edit(name, column, new)
+            Enemy.remove(name)
+            await ctx.send('> *Готово!*')
         except sqlite3.OperationalError as e:
             await ctx.send(f'> *{e}*')
+
+
+@bot.command(name='create_mob', aliases=['makemob'])
+@commands.check(check_admin)
+async def create_mob(ctx):
+    context = ctx.message.content.split()
+
+    if len(context) < 7:
+        await ctx.send('> *Введены не все обязательные параметры!*')
+        return
+    elif len(context) == 7:
+        Enemy.create(context[1], context[2], context[3], context[4], context[5], context[6])
+    elif len(context) == 8:
+        try:
+            color = int(context[7])
+            Enemy.create(context[1], context[2], context[3], context[4], context[5], context[6], color=color)
+        except ValueError:
+            Enemy.create(context[1], context[2], context[3], context[4], context[5], context[6], icon=context[7])
     else:
-        await ctx.send('> *Такого существа нет!*')
+        Enemy.create(context[1], context[2], context[3], context[4], context[5], context[6], context[7], int(context[8]))
+    await ctx.send('> *Готово!*')
+    mob = Enemy.read(context[1])
+    try:
+        await ctx.send(f'>>> **id:** *{mob[0]}*\n'
+                       f'**name:** *{mob[1]}*\n'
+                       f'**bowed_name:** *{mob[2]}*\n'
+                       f'**hp:** *{mob[3]}*\n'
+                       f'**power:** *{mob[4]}*\n'
+                       f'**exp:** *{mob[5]}*\n'
+                       f'**money:** *{mob[6]}*\n'
+                       f'**icon:** *{mob[7]}*\n'
+                       f'**color:** *{mob[8]}*\n')
+    except sqlite3.OperationalError as e:
+        await ctx.send(f'> *{e}*')
 
 
 @bot.command(name='get_mob_info', aliases=['mobinfo'])
@@ -223,7 +292,7 @@ async def top(ctx):
 @bot.command(name='moblist', aliases=['mobs'])
 @commands.check(check_adventure)
 async def moblist(ctx):
-    result = Enemy.get_all()
+    result = Enemy.get_all_by_id()
     names_list = list()
     [names_list.append(mob[1]) for mob in result]
 
