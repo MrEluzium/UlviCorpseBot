@@ -4,6 +4,7 @@ import sqlite3
 import progressbar
 from discord.ext import tasks, commands
 from os import name as os_name
+from datetime import datetime, timedelta
 from Classes.Paginator import Paginator
 from Classes.Character import CharacterControl
 from Classes.Enemies import EnemyControl
@@ -108,14 +109,14 @@ async def edit_mob(ctx):
                 await ctx.send('> *Готово!*')
                 mob = Enemy.read(context[1])
                 await ctx.send(f'>>> **id:** *{mob[0]}*\n'
-                                f'**name:** *{mob[1]}*\n'
-                                f'**bowed_name:** *{mob[2]}*\n'
-                                f'**hp:** *{mob[3]}*\n'
-                                f'**power:** *{mob[4]}*\n'
-                                f'**exp:** *{mob[5]}*\n'
-                                f'**money:** *{mob[6]}*\n'
-                                f'**icon:** *{mob[7]}*\n'
-                                f'**color:** *{mob[8]}*\n')
+                               f'**name:** *{mob[1]}*\n'
+                               f'**bowed_name:** *{mob[2]}*\n'
+                               f'**hp:** *{mob[3]}*\n'
+                               f'**power:** *{mob[4]}*\n'
+                               f'**exp:** *{mob[5]}*\n'
+                               f'**money:** *{mob[6]}*\n'
+                               f'**icon:** *{mob[7]}*\n'
+                               f'**color:** *{mob[8]}*\n')
             except sqlite3.IntegrityError as e:
                 await ctx.send(f'> *{e}*')
             except sqlite3.OperationalError or sqlite3.IntegrityError as e:
@@ -203,7 +204,7 @@ async def get_mob_info(ctx):
 
 @bot.command(name='stats')
 @commands.check(check_tavern)
-async def stats(ctx, stat_embed_ver=2):
+async def stats(ctx):
     player = Character.read(ctx.author.id)
 
     embed_color = ctx.author.color
@@ -235,11 +236,11 @@ async def top(ctx):
     embed_main = discord.Embed(title='Рейтинг игроков', description=" ", color=16104960)
     embed_main.set_thumbnail(url=bot.get_user(rating[0][0]).avatar_url)
     embed_main.add_field(name=f":crown: {rating[0][1]}  •  :crossed_swords: {rating[0][7]}",
-                    value=f"**1. {bot.get_user(rating[0][0]).mention}**", inline=False)
+                         value=f"**1. {bot.get_user(rating[0][0]).mention}**", inline=False)
 
     for i in range(1, 5 if max >= 5 else max + 1):
         embed_main.add_field(name=f":crown: {rating[i][1]}  •  :crossed_swords: {rating[i][7]}",
-                        value=f"{i+1}. {bot.get_user(rating[i][0]).mention}", inline=False)
+                             value=f"{i+1}. {bot.get_user(rating[i][0]).mention}", inline=False)
     embeds.append(embed_main)
 
     embed = discord.Embed(title='Рейтинг игроков', description=" ", color=16104960)
@@ -327,6 +328,7 @@ async def fight(ctx):
                 winner = 'mob'
                 break
 
+        Character.set_stat(player_id, 'battle_time', str(datetime.now()))
         if winner == 'player':
             Character.set_stat(player_id, 'hp', battle_player_hp)
             Character.set_stat(player_id, 'exp', player_exp+mob_exp)
@@ -405,8 +407,25 @@ async def buy(ctx):
 
 # Проверяем, участвет ли аккаунт в игре. Если нет, то создаем новоро персонажа.
 async def check_player_in_game(id):
-    if not Character.read(id):
+    player = Character.read(id)
+    if not player:
         Character.create(id)
+
+    elif player[10]:
+        d1 = datetime.strptime(player[10], "%Y-%m-%d %H:%M:%S.%f")
+        d2 = datetime.now()
+        delta = d2 - d1
+        delta = delta.total_seconds()
+
+        if delta > 900:
+            Character.set_stat(player[0], 'battle_time', '')
+            Character.set_stat(player[0], 'hp', player[6])
+
+
+async def get_delta(time):
+    delta = timedelta(seconds=(900 - time))
+    delta = ':'.join(str(delta).split('.')[0].split(':')[1:])
+    return delta
 
 
 @bot.command(name='author')
