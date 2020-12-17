@@ -7,7 +7,7 @@ class CharacterControl:
     def create(self, id):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute(f"INSERT INTO Characters VALUES('{id}', 1, 0, 0, 240, 150, 150, 20, 0);")
+        cursor.execute(f"INSERT INTO Characters(id, lvl, exp, fullexp, expmax, hp, hpmax, power, money) VALUES('{id}', 1, 0, 0, 240, 100, 100, 1, 0);")
         conn.commit()
         conn.close()
 
@@ -21,7 +21,11 @@ class CharacterControl:
     def set_stat(self, id, stat, new):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute(f"UPDATE Characters SET {stat} = {new} where id = {id};")
+        try:
+            new = int(new)
+            cursor.execute(f"UPDATE Characters SET {stat} = {new} where id = {id};")
+        except ValueError:
+            cursor.execute(f"UPDATE Characters SET {stat} = '{new}' where id = {id};")
         conn.commit()
         conn.close()
 

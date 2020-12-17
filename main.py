@@ -88,6 +88,7 @@ async def guild_remove(ctx):
 @commands.check(check_admin)
 async def set_slowmode(ctx, time):
     await Guild.set_slowmode(ctx.guild, time)
+    await ctx.send(f'> *Модленный режим установлен на {time} во всех каналах*')
 
 
 @bot.command(name='edit_mob')
@@ -177,11 +178,12 @@ async def create_mob(ctx):
 @bot.command(name='get_mob_info', aliases=['mobinfo'])
 @commands.check(check_admin)
 async def get_mob_info(ctx):
-    command_len = 14 if 'get_mob_info' in ctx.message.content else 9
-    if len(ctx.message.content) < command_len:
+    context = ctx.message.content.split()
+
+    if len(context) == 1:
         await ctx.send('> *Введите имя существа!*')
         return
-    mob = Enemy.read(ctx.message.content[command_len:].title())
+    mob = Enemy.read(context[1].title())
     if mob:
         try:
             await ctx.send(f'>>> **id:** *{mob[0]}*\n'
@@ -199,58 +201,26 @@ async def get_mob_info(ctx):
         await ctx.send('> *Такого существа нет!*')
 
 
-
 @bot.command(name='stats')
 @commands.check(check_tavern)
 async def stats(ctx, stat_embed_ver=2):
-    current_char = Character.read(ctx.author.id)
+    player = Character.read(ctx.author.id)
 
     embed_color = ctx.author.color
     if str(embed_color) == '#000000':
         embed_color = discord.colour.Colour(16777214)
 
     embed = discord.Embed(color=embed_color)
-    if stat_embed_ver == 0:
-        embed.set_thumbnail(url=ctx.author.avatar_url)
-        embed.add_field(name=f"**Профиль игрока**", value=ctx.author.mention, inline=False)
-
-        embed.add_field(name=":crown: **Уровень \n"
-                             ":star: Опыт** \n"
-                             ":heart: Здоровье \n"
-                             ":crossed_swords: Сила \n"
-                             ":coin: Монеты",
-                        value="    ‌‌‍‍", inline=True)
-
-        embed.add_field(name=f"**{current_char[1]} \n"
-                             f"{current_char[2]} | {current_char[3]} \n"
-                             f"{current_char[4]} | {current_char[5]} \n"
-                             f"{current_char[6]} \n"
-                             f"{current_char[7]}**",
-                        value="    ‌‌‍‍", inline=True)
-
-    elif stat_embed_ver == 1:
-        embed.set_thumbnail(url=ctx.author.avatar_url)
-        embed.add_field(name=f"**Профиль игрока**",
-                        value=ctx.author.mention, inline=False)
-        embed.add_field(
-            name=":crown: **Уровень • 1 \n"
-                 ":star: Опыт • 0 | 240** \n"
-                 ":heart: Здоровье • 150 | 150\n"
-                 ":crossed_swords: Сила • 1\n"
-                 ":coin: Монеты • 5",
-            value="    ‌‌‍‍", inline=False)
-
-    elif stat_embed_ver == 2:
-        embed.set_thumbnail(url=ctx.author.avatar_url)
-        embed.add_field(name=f"**Профиль игрока**",
-                        value=ctx.author.mention, inline=False)
-        embed.add_field(
-            name="**:crown: Уровень       1 \n"
-                 ":star: Опыт             0 | 240 \n"
-                 ":heart: Здоровье    150 | 150\n"
-                 ":crossed_swords: Сила               1\n"
-                 ":coin: Монеты       10**",
-            value=" ‌‌‍‍", inline=False)
+    embed.set_thumbnail(url=ctx.author.avatar_url)
+    embed.add_field(name=f"**Профиль игрока**",
+                    value=ctx.author.mention, inline=False)
+    embed.add_field(
+        name=f"**:crown: Уровень       {player[1]} \n"
+             f":star: Опыт             {player[2]} | {player[4]} \n"
+             f":heart: Здоровье    {player[5]} | {player[6]}\n"
+             f":crossed_swords: Сила               {player[7]}\n"
+             f":coin: Монеты       {player[8]}**",
+        value=" ‌‌‍‍", inline=False)
     await ctx.send(embed=embed)
 
 
@@ -264,17 +234,17 @@ async def top(ctx):
 
     embed_main = discord.Embed(title='Рейтинг игроков', description=" ", color=16104960)
     embed_main.set_thumbnail(url=bot.get_user(rating[0][0]).avatar_url)
-    embed_main.add_field(name=f":star:{rating[0][3]}  •  :crossed_swords: {rating[0][7]}",
+    embed_main.add_field(name=f":crown: {rating[0][1]}  •  :crossed_swords: {rating[0][7]}",
                     value=f"**1. {bot.get_user(rating[0][0]).mention}**", inline=False)
 
     for i in range(1, 5 if max >= 5 else max + 1):
-        embed_main.add_field(name=f":star:{rating[i][3]}  •  :crossed_swords: {rating[i][7]}",
+        embed_main.add_field(name=f":crown: {rating[i][1]}  •  :crossed_swords: {rating[i][7]}",
                         value=f"{i+1}. {bot.get_user(rating[i][0]).mention}", inline=False)
     embeds.append(embed_main)
 
     embed = discord.Embed(title='Рейтинг игроков', description=" ", color=16104960)
     for player in rating[5:]:
-        embed.add_field(name=f":star:{player[3]}  •  :crossed_swords: {player[7]}",
+        embed.add_field(name=f":crown: {player[1]}  •  :crossed_swords: {player[7]}",
                         value=f"{count+1}. {bot.get_user(player[0]).mention}", inline=False)
         if count == max:
             embeds.append(embed)
@@ -326,35 +296,60 @@ async def mob(ctx):
 @bot.command(name='fight')
 @commands.check(check_adventure)
 async def fight(ctx):
-    if len(ctx.message.content) < 7:
+    context = ctx.message.content.split()
+    if len(context) == 1:
         await ctx.send('> *Введите имя существа!*')
         return
 
-    mob = Enemy.read(ctx.message.content[7:].title())
+    mob = Enemy.read(context[1].title())
     if mob:
         mob_name, mob_bowed_name, mob_exp, mob_power, mob_hp, mob_money, mob_icon = mob[1], mob[2], mob[3], mob[4], mob[5], mob[6], mob[7]
         mob_color = int(mob[8]) if mob[8] else None
         player = Character.read(ctx.author.id)
-        player_hp, player_power = player[5], player[7]
+        player_id, player_exp, player_full_exp, player_hp, player_power, player_money = player[0], player[2], player[3], player[5], player[7], player[8]
 
         file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power, '...')
         message = await ctx.send(file=file, embed=embed)
 
-        await asyncio.sleep(0.7)
-        if player[5] > mob[3]:
+        await asyncio.sleep(0.5)
+
+        winner = None
+        count = 0
+        battle_mob_hp = mob_hp
+        battle_player_hp = player_hp
+        while count < 300:
+            battle_mob_hp -= player_power
+            if battle_mob_hp <= 0:
+                winner = 'player'
+                break
+            battle_player_hp -= mob_power
+            if battle_player_hp <= 0:
+                winner = 'mob'
+                break
+
+        if winner == 'player':
+            Character.set_stat(player_id, 'hp', battle_player_hp)
+            Character.set_stat(player_id, 'exp', player_exp+mob_exp)
+            Character.set_stat(player_id, 'fullexp', player_full_exp + mob_exp)
+            Character.set_stat(player_id, 'money', player_money+mob_money)
+
             file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power,
                                                 f'__Вы успешно победили врага__\nВаша награда: :star:{mob_exp}  •  :coin:{mob_money}')
             await message.edit(embed=embed)
-        else:
-            file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power,
-                                                f'no')
+
+        elif winner == 'mob':
+            Character.set_stat(player_id, 'hp', 0)
+
+            file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color,
+                                                player_hp, player_power,
+                                                f'__Вы не сумели победить врага__\n:heart: Ваше здоровье на нуле\n:clock4: Время восстановления: 15 минут')
             await message.edit(embed=embed)
 
     else:
         await ctx.send('> *Такого существа нет!*')
 
 
-async def get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power, text):
+async def get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power, text, add_hp=None):
     file = None
     embed = discord.Embed(title=f"Начался бой с {mob_bowed_name}", description=" ", color=mob_color)\
         if mob_color else discord.Embed(title=f"Начался бой с {mob_bowed_name}", description=" ")
@@ -369,6 +364,10 @@ async def get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon,
     embed.add_field(
         name=f"{text}",
         value=" ‌‌‍‍", inline=False)
+    if add_hp:
+        embed.add_field(
+            name=f"У вас осталось :heart:{add_hp}",
+            value=" ‌‌‍‍", inline=False)
     return file, embed
 
 

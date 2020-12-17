@@ -25,6 +25,10 @@ class ShopControl:
     def set_stat(self, name, column, new):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute(f"UPDATE {self.type} SET {column} = {new} where name = '{name}';")
+        try:
+            new = int(new)
+            cursor.execute(f"UPDATE {self.type} SET {column} = {new} where name = '{name}';")
+        except ValueError:
+            cursor.execute(f"UPDATE {self.type} SET {column} = '{new}' where name = '{name}';")
         conn.commit()
         conn.close()
