@@ -22,8 +22,15 @@ intents.members = True
 bot = commands.Bot(command_prefix='/', intents=intents)
 
 
+async def set_activity(score=0):
+    activities = ['#StayHome', f'on {len(bot.guilds)} servers!', 'Cake is a lie!', 'Your princess is in another castle!']
+    cur_activity = discord.Game(activities[score])
+    await bot.change_presence(status=discord.Status.online, activity=cur_activity)
+
+
 @bot.event
 async def on_ready():
+    await set_activity(3)
     print(f'{bot.user} has connected to Discord!')
 
 
@@ -128,7 +135,7 @@ async def edit_mob(ctx):
             await ctx.send('> *Такого существа нет!*')
 
 
-@bot.command(name='remove_mob')
+@bot.command(name='remove_mob', aliases=['delmob'])
 @commands.check(check_admin)
 async def remove_mob(ctx):
     context = ctx.message.content.split()
@@ -203,6 +210,31 @@ async def get_mob_info(ctx):
             await ctx.send(f'> *{e}*')
     else:
         await ctx.send('> *Такого существа нет!*')
+
+
+@bot.command(name='add_shop_item', aliases=['additem'])
+@commands.check(check_admin)
+async def add_shop_item(ctx):
+    types = ['Weapon', 'Armor', 'Armour']
+    context = ctx.message.content.split()
+
+    if len(context) < 5:
+        await ctx.send('> *Введены не все параметры!*')
+        return
+    if context[1].title() not in types:
+        await ctx.send('> *Введен неверный тип предмета! (Weapon/Armour)*')
+        return
+    try:
+        stat, price = int(context[-2]), int(context[-1])
+        name = " ".join(context[2:-2])
+        if context[1] == "Weapon":
+            Weapon.create(name, stat, price)
+            await ctx.send(f'>>> Готово!\n*name: {name}\npower: {stat}\nprice: {price}*')
+        else:
+            Armour.create(name, stat, price)
+            await ctx.send(f'>>> Готово!\n*name: {name}\nprotection: {stat}\nprice: {price}*')
+    except ValueError:
+        await ctx.send('> *Неверный синтаксис команды!*')
 
 
 @bot.command(name='stats')

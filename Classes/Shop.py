@@ -32,3 +32,10 @@ class ShopControl:
             cursor.execute(f"UPDATE {self.type} SET {column} = '{new}' where name = '{name}';")
         conn.commit()
         conn.close()
+
+    def remove(self, name):
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute(f"DELETE FROM {self.type} where name = '{name}';")
+        conn.commit()
+        conn.close()
