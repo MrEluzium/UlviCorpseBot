@@ -2,8 +2,8 @@
 import discord
 import asyncio
 import sqlite3
-from discord.ext import tasks, commands
-from os import name as os_name
+from discord.ext import commands
+from os import name as os_name  # TODO cool looking boot
 from datetime import datetime, timedelta
 from Classes.Paginator import Paginator
 from Classes.Character import CharacterControl
@@ -457,7 +457,6 @@ async def fight(ctx):
         battle_mob_hp = mob_hp
         battle_player_hp = player_hp
         while count < 300:
-            print(battle_player_hp)
             battle_mob_hp -= (player_power+player_weapon_power)
             if battle_mob_hp <= 0:
                 winner = 'player'
@@ -595,11 +594,9 @@ async def buy(ctx):
         item_name = " ".join(context[2:])
         type = context[1].title()
         if type == 'Weapon':
-            stat_main = 'power'
             cover = ":crossed_swords:"
             controller = Weapon
         else:
-            stat_main = 'protection'
             cover = ":shield: "
             controller = Armour
     player = Character.read(ctx.author.id)
