@@ -233,10 +233,10 @@ async def add_shop_item(ctx):
         name = " ".join(context[2:-2])
         if context[1].title() == "Weapon":
             Weapon.create(name, stat, price)
-            await ctx.send(f'>>> Готово!\n*name: {name}\npower: {stat}\nprice: {price}*')
+            await ctx.send(f'>>> *Готово!\nname: {name}\npower: {stat}\nprice: {price}*')
         else:
             Armour.create(name, stat, price)
-            await ctx.send(f'>>> Готово!\n*name: {name}\nprotection: {stat}\nprice: {price}*')
+            await ctx.send(f'>>> *Готово!\nname: {name}\nprotection: {stat}\nprice: {price}*')
     except ValueError:
         await ctx.send('> *Неверный синтаксис команды!*')
 
@@ -270,7 +270,7 @@ async def edit_shop_item(ctx):
                     Weapon.set_stat(name, editing_stat, new)
                     await ctx.send(f'>>> *Готово!*')
                 else:
-                    await ctx.send(f'>>> *Неверное имя предмета!*')
+                    await ctx.send('> *Такого предмета нет!*')
                     return
             else:
                 item = Armour.read(name)
@@ -278,7 +278,7 @@ async def edit_shop_item(ctx):
                     Armour.set_stat(name, editing_stat, new)
                     await ctx.send(f'>>> *Готово!*')
                 else:
-                    await ctx.send(f'>>> *Неверное имя предмета!*')
+                    await ctx.send('> *Такого предмета нет!*')
                     return
             if editing_stat == 'name':
                 item = Weapon.read(new)
@@ -291,6 +291,36 @@ async def edit_shop_item(ctx):
             await ctx.send(f'> *{e}*')
     else:
         await ctx.send('> *Введен неверный тип статы для изменения! (name/power/protection/price)*')
+
+
+@bot.command(name='remove_shop_item', aliases=['removeitem', 'delitem'])
+@commands.check(check_admin)
+async def remove_shop_item(ctx):
+    types = ['Weapon', 'Armor', 'Armour']
+    context = ctx.message.content.split()
+
+    if len(context) < 3:
+        await ctx.send('> *Введены не все параметры!*')
+        return
+    if context[1].title() not in types:
+        await ctx.send('> *Введен неверный тип предмета! (Weapon/Armour)*')
+        return
+
+    name = " ".join(context[2:])
+    if context[1].title() == "Weapon":
+        item = Weapon.read(name)
+        if item:
+            Weapon.remove(name)
+            await ctx.send(f'>>> *Готово!*')
+        else:
+            await ctx.send('> *Такого предмета нет!*')
+    else:
+        item = Armour.read(name)
+        if item:
+            Armour.remove(name)
+            await ctx.send(f'>>> *Готово!*')
+        else:
+            await ctx.send('> *Такого предмета нет!*')
 
 
 @bot.command(name='stats')
@@ -308,8 +338,8 @@ async def stats(ctx):
                     value=ctx.author.mention, inline=False)
 
     health_recovery = ""
-    if player[10]:
-        d1 = datetime.strptime(player[10], "%Y-%m-%d %H:%M:%S.%f")
+    if player[12]:
+        d1 = datetime.strptime(player[12], "%Y-%m-%d %H:%M:%S.%f")
         d2 = datetime.now()
         delta = d2 - d1
         delta = delta.total_seconds()
@@ -320,8 +350,8 @@ async def stats(ctx):
         name=f"**:crown: Уровень       {player[1]} \n"
              f":star: Опыт             {player[2]} | {player[4]} \n"
              f":heart: Здоровье    {player[5]} | {player[6]}\n"
-             f":crossed_swords: Сила               {player[7]}\n"
-             f":coin: Монеты       {player[8]}**"
+             f":crossed_swords: Сила               {player[8]+player[9]}\n"
+             f":coin: Монеты       {player[10]}**"
              f"{health_recovery}",
         value=" ‌‌‍‍", inline=False)
     await ctx.send(embed=embed)
@@ -336,17 +366,17 @@ async def top(ctx):
     embeds = list()
     embed_main = discord.Embed(title='Рейтинг игроков', description=" ", color=16104960)
     embed_main.set_thumbnail(url=ctx.message.guild.get_member(rating[0][0]).avatar_url)
-    embed_main.add_field(name=f":crown: {rating[0][1]}  •  :crossed_swords: {rating[0][7]}",
+    embed_main.add_field(name=f":crown: {rating[0][1]}  •  :crossed_swords: {rating[0][8]+rating[0][9]}",
                          value=f"**1. {ctx.message.guild.get_member(rating[0][0]).mention}**", inline=False)
 
     for i in range(1, 5 if max >= 5 else max + 1):
-        embed_main.add_field(name=f":crown: {rating[i][1]}  •  :crossed_swords: {rating[i][7]}",
+        embed_main.add_field(name=f":crown: {rating[i][1]}  •  :crossed_swords: {rating[i][8]+rating[i][9]}",
                              value=f"{i+1}. {ctx.message.guild.get_member(rating[i][0]).mention}", inline=False)
     embeds.append(embed_main)
 
     embed = discord.Embed(title='Рейтинг игроков', description=" ", color=16104960)
     for player in rating[5:]:
-        embed.add_field(name=f":crown: {player[1]}  •  :crossed_swords: {player[7]}",
+        embed.add_field(name=f":crown: {player[1]}  •  :crossed_swords: {player[8]+player[9]}",
                         value=f"{count+1}. {ctx.message.guild.get_member(player[0]).mention}", inline=False)
         if count == max:
             embeds.append(embed)
@@ -383,7 +413,8 @@ async def moblist(ctx):
 @commands.check(check_adventure)
 async def mob(ctx):
     if len(ctx.message.content) < 5:
-        await ctx.send('> *Введите имя существа!*')
+        embed = discord.Embed(title="Введите имя существа!", description=" ")
+        await ctx.send(embed=embed)
         return
 
     mob = Enemy.read(ctx.message.content[5:].title())
@@ -392,7 +423,8 @@ async def mob(ctx):
         await ctx.send(file=file, embed=embed)
 
     else:
-        await ctx.send('> *Такого существа нет!*')
+        embed = discord.Embed(title="Такого существа нет!", description=" ")
+        await ctx.send(embed=embed)
 
 
 @bot.command(name='fight')
@@ -400,7 +432,8 @@ async def mob(ctx):
 async def fight(ctx):
     context = ctx.message.content.split()
     if len(context) == 1:
-        await ctx.send('> *Введите имя существа!*')
+        embed = discord.Embed(title="Введите имя существа!", description=" ")
+        await ctx.send(embed=embed)
         return
 
     mob = Enemy.read(context[1].title())
@@ -411,10 +444,10 @@ async def fight(ctx):
         mob_color = int(mob[8]) if mob[8] else None
         player = Character.read(ctx.author.id)
 
-        player_id, player_lvl, player_exp, player_full_exp, player_expmax, player_hp, player_hp_max, player_power, player_money =\
-            player[0], player[1], player[2], player[3], player[4], player[5], player[6], player[7], player[8]
+        player_id, player_lvl, player_exp, player_full_exp, player_expmax, player_protection, player_hp, player_hp_max, player_power, player_weapon_power, player_money =\
+            player[0], player[1], player[2], player[3], player[4], player[5], player[6], player[7], player[8], player[9], player[10]
 
-        file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power, '...')
+        file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power+player_weapon_power, '...')
         message = await ctx.send(file=file, embed=embed)
 
         await asyncio.sleep(0.5)
@@ -426,7 +459,7 @@ async def fight(ctx):
         battle_player_hp = player_hp
         while count < 300:
             print(battle_player_hp)
-            battle_mob_hp -= player_power
+            battle_mob_hp -= (player_power+player_weapon_power)
             if battle_mob_hp <= 0:
                 winner = 'player'
                 break
@@ -456,10 +489,10 @@ async def fight(ctx):
 
             if new_level:
                 file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color,
-                                                    player_hp, player_power,
+                                                    player_hp, player_power+player_weapon_power,
                                                     f'__Вы успешно победили врага__\nВаша награда: :star:{mob_exp}  •  :coin:{mob_money}', level=True)
             else:
-                file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power,
+                file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power+player_weapon_power,
                                                     f'__Вы успешно победили врага__\nВаша награда: :star:{mob_exp}  •  :coin:{mob_money}')
             await message.edit(embed=embed)
 
@@ -467,12 +500,13 @@ async def fight(ctx):
             Character.set_stat(player_id, 'hp', 0)
 
             file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color,
-                                                player_hp, player_power,
+                                                player_hp, player_power+player_weapon_power,
                                                 f'__Вы не сумели победить врага__\n:heart: Ваше здоровье на нуле\n:clock4: Время восстановления: 15 минут')
             await ctx.send(embed=embed)
 
     else:
-        await ctx.send('> *Такого существа нет!*')
+        embed = discord.Embed(title="Такого существа нет!", description=" ")
+        await ctx.send(embed=embed)
 
 
 async def get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power, text, level=None):
@@ -497,36 +531,94 @@ async def get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon,
     return file, embed
 
 
+@bot.command(name='shop')
+@commands.check(check_shop)
+async def shop(ctx):
+    types = ['Weapon', 'Armor', 'Armour']
+    context = ctx.message.content.split()
+
+    if len(context) == 1:
+        embed = discord.Embed(title="Введите тип магазина! (Weapon/Armour)", description=" ", color=15900236)
+        await ctx.send(embed=embed)
+        return
+    if context[1].title() not in types:
+        embed = discord.Embed(title="Введен неверный тип предмета! (Weapon/Armour)", description=" ", color=15900236)
+        await ctx.send(embed=embed)
+        return
+    else:
+        type = context[1].title()
+        if type == 'Weapon':
+            shop_name = "Магазин оружия"
+            stat = 'power'
+            cover = ":crossed_swords:"
+            controller = Weapon
+        else:
+            shop_name = "Магазин брони"
+            stat = 'protection'
+            cover = ":shield: "
+            controller = Armour
+
+    items = controller.get_all_by_stat(stat)
+    embed = discord.Embed(title=shop_name, description=" ", color=15900236)
+    embeds = list()
+    count = 1
+    for item in items:
+        embed.add_field(name=f"• {item[1]} •\n:coin: {item[3]}  •  {cover}{item[2]}", value=" ‌‌‍‍", inline=False)
+        embed.set_footer(text=f"/buy {type} [item]")
+        if count % 5 == 0:
+            embeds.append(embed)
+            embed = discord.Embed(title=shop_name, description=" ", color=15900236)
+        count += 1
+    embeds.append(embed)
+
+    message = await ctx.send(embed=embeds[0])
+    page = Paginator(bot, message, use_more=False, embeds=embeds)
+    await page.start()
+
+
 @bot.command(name='buy')
 @commands.check(check_shop)
 async def buy(ctx):
     types = ['Weapon', 'Armor', 'Armour']
     context = ctx.message.content.split()
-    print(context)
 
-    if len(context) == 1:
-        # TODO Сообщение о пусто запросе в магазин
+    if len(context) < 3:
+        embed = discord.Embed(title="Введите тип и название предмета для его покупки!", description=" ", color=15900236)
+        await ctx.send(embed=embed)
         return
-
     if context[1].title() not in types:
-        # TODO Сообщение о неправильном запросе в магазин
+        embed = discord.Embed(title="Введен неверный тип предмета! (Weapon/Armour)", description=" ", color=15900236)
+        await ctx.send(embed=embed)
         return
     else:
-        type = 'Weapons' if context[1].title() == 'Weapon' else 'Armours'
-        controller = Weapon if context[1].title() == 'Weapon' else Armour
-
-    item_name = ""
-    for word in context[2:]:
-        item_name += word + " "
-    item_name = item_name.rstrip()
-
-    print(item_name)
+        item_name = " ".join(context[2:])
+        type = context[1].title()
+        if type == 'Weapon':
+            stat_main = 'power'
+            cover = ":crossed_swords:"
+            controller = Weapon
+        else:
+            stat_main = 'protection'
+            cover = ":shield: "
+            controller = Armour
+    player = Character.read(ctx.author.id)
+    player_id, player_lvl, player_exp, player_full_exp, player_expmax, player_hp, player_protection, player_hp_max, player_power, player_money, player_inventory = \
+        player[0], player[1], player[2], player[3], player[4], player[5], player[6], player[7], player[8], player[9], player[10]
     item = controller.read(item_name)
     if item:
-        print(item_name)
-
+        item_id, item_stat, item_price = item[0], item[2], item[3]
+        if item_price <= player_money:
+            Character.set_stat(player_id, 'money', player_money-item_price)
+            if type == 'Weapon':
+                Character.set_stat(player_id, "protection", item_stat)
+            else:
+                Character.set_stat(player_id, "hpmax", player_hp_max-player_protection+item_stat)
+        else:
+            embed = discord.Embed(title="У вас недостаточно монет!", description=" ", color=15900236)
+            await ctx.send(embed=embed)
     else:
-        await ctx.send('> *Такого существа нет!*')
+        embed = discord.Embed(title="Такого предмета нет!", description=" ", color=15900236)
+        await ctx.send(embed=embed)
 
 
 # Проверяем, участвет ли аккаунт в игре. Если нет, то создаем новоро персонажа.

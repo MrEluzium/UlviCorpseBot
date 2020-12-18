@@ -12,17 +12,17 @@ class EnemyControl:
         if color:
             if icon:
                 cursor.execute(
-                    f"INSERT INTO Enemies(name, bowed_name, exp, power, hp, money, icon, color) VALUES('{name}', '{bowed_name}', {exp}, {power}, {hp}, {money}, '{icon}', {color});")
+                    f"""INSERT INTO Enemies(name, bowed_name, exp, power, hp, money, icon, color) VALUES("{name}", "{bowed_name}", {exp}, {power}, {hp}, {money}, "{icon}", {color});""")
             else:
                 cursor.execute(
-                    f"INSERT INTO Enemies(name, bowed_name, exp, power, hp, money, color) VALUES('{name}', '{bowed_name}', {exp}, {power}, {hp}, {money}, {color});")
+                    f"""INSERT INTO Enemies(name, bowed_name, exp, power, hp, money, color) VALUES("{name}", "{bowed_name}", {exp}, {power}, {hp}, {money}, {color});""")
         else:
             if icon:
                 cursor.execute(
-                    f"INSERT INTO Enemies(name, bowed_name, exp, power, hp, money, icon) VALUES('{name}', '{bowed_name}', {exp}, {power}, {hp}, {money}, '{icon}');")
+                    f"""INSERT INTO Enemies(name, bowed_name, exp, power, hp, money, icon) VALUES("{name}", "{bowed_name}", {exp}, {power}, {hp}, {money}, "{icon}");""")
             else:
                 cursor.execute(
-                    f"INSERT INTO Enemies(name, bowed_name, exp, power, hp, money) VALUES('{name}', '{bowed_name}', {exp}, {power}, {hp}, {money});")
+                    f"""INSERT INTO Enemies(name, bowed_name, exp, power, hp, money) VALUES("{name}", "{bowed_name}", {exp}, {power}, {hp}, {money});""")
 
         conn.commit()
         conn.close()
@@ -30,7 +30,7 @@ class EnemyControl:
     def read(self, name):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        result = cursor.execute(f"SELECT * FROM Enemies where name = '{name}';").fetchone()
+        result = cursor.execute(f"""SELECT * FROM Enemies where name = "{name}";""").fetchone()
         conn.close()
         return result
 
@@ -53,16 +53,16 @@ class EnemyControl:
         cursor = conn.cursor()
         try:
             new = int(new)
-            cursor.execute(f"UPDATE Enemies SET {column} = {new} where name = '{name}';")
+            cursor.execute(f"""UPDATE Enemies SET {column} = {new} where name = "{name}";""")
         except ValueError:
-            cursor.execute(f"UPDATE Enemies SET {column} = '{new}' where name = '{name}';")
+            cursor.execute(f"""UPDATE Enemies SET {column} = '{new}' where name = "{name}";""")
         conn.commit()
         conn.close()
 
     def remove(self, name):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute(f"DELETE FROM Enemies where name = '{name}';")
+        cursor.execute(f"""DELETE FROM Enemies where name = "{name}";""")
         conn.commit()
         conn.close()
 

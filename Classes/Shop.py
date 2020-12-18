@@ -11,14 +11,14 @@ class ShopControl:
     def create(self, name, stat, price):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute(f"INSERT INTO {self.type} VALUES('{uuid.uuid4()}', '{name}', {stat}, {price});")
+        cursor.execute(f"""INSERT INTO {self.type} VALUES("{uuid.uuid4()}", "{name}", {stat}, {price});""")
         conn.commit()
         conn.close()
 
     def read(self, name):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        result = cursor.execute(f"SELECT * FROM {self.type} where name = '{name}';").fetchone()
+        result = cursor.execute(f"""SELECT * FROM {self.type} where name = "{name}";""").fetchone()
         conn.close()
         return result
 
@@ -27,15 +27,22 @@ class ShopControl:
         cursor = conn.cursor()
         try:
             new = int(new)
-            cursor.execute(f"UPDATE {self.type} SET {column} = {new} where name = '{name}';")
+            cursor.execute(f"""UPDATE {self.type} SET {column} = {new} where name = "{name}";""")
         except ValueError:
-            cursor.execute(f"UPDATE {self.type} SET {column} = '{new}' where name = '{name}';")
+            cursor.execute(f"""UPDATE {self.type} SET {column} = "{new}" where name = "{name}";""")
         conn.commit()
         conn.close()
+
+    def get_all_by_stat(self, type):
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        result = cursor.execute(f"SELECT * FROM {self.type} ORDER BY {type};").fetchall()
+        conn.close()
+        return result
 
     def remove(self, name):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute(f"DELETE FROM {self.type} where name = '{name}';")
+        cursor.execute(f"""DELETE FROM {self.type} where name = "{name}";""")
         conn.commit()
         conn.close()
