@@ -82,6 +82,13 @@ async def guild_deploy(ctx):
         await on_guild_join(ctx.guild)
 
 
+@bot.command(name='upload_image')
+@commands.check(check_admin)
+async def upload_image(ctx):
+    for attach in ctx.message.attachments:
+        await attach.save(f"data/pictures/{attach.filename}")
+
+
 @bot.command(name='guild_remove', aliases=['gldrem'])
 @commands.check(check_admin)
 async def guild_remove(ctx):
@@ -400,7 +407,8 @@ async def moblist(ctx):
     embed = discord.Embed(title='Доступные существа', description=" ", color=4631782)
     embed_text = ""
     for mob in names_list:
-        embed_text += f":diamond_shape_with_a_dot_inside: {mob}\n"
+        embed_text += f":cyclone: {mob}\n"
+    print(len(embed_text))
     embed_text += "\n"
     embed.add_field(
         name=embed_text, value="Ипользуй /mob [имя]‌‌‍‍", inline=False)
