@@ -563,8 +563,6 @@ async def shop(ctx):
     count = 1
     player = Character.read(ctx.author.id)
     for item in items:
-        print(item[0], player[11], player[13])
-        print(not player[11], item[0] != player[11], not player[11] or item[0] != player[11])
         if (not player[11] or item[0] != player[11]) and (not player[13] or item[0] != player[13]):
             embed.add_field(name=f"• {item[1]} •\n:coin: {item[3]}  •  {cover}{item[2]}", value=" ‌‌‍‍", inline=False)
             if count % 5 == 0:
