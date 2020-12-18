@@ -3,7 +3,6 @@ import discord
 import asyncio
 import sqlite3
 from discord.ext import commands
-from os import name as os_name  # TODO cool looking boot
 from datetime import datetime, timedelta
 from Classes.Paginator import Paginator
 from Classes.Character import CharacterControl
@@ -29,7 +28,7 @@ async def set_activity(score=0):
 
 @bot.event
 async def on_ready():
-    await set_activity(3)
+    # await set_activity(3)
     print(f'{bot.user} has connected to Discord!')
 
 
@@ -408,7 +407,6 @@ async def moblist(ctx):
     embed_text = ""
     for mob in names_list:
         embed_text += f":cyclone: {mob}\n"
-    print(len(embed_text))
     embed_text += "\n"
     embed.add_field(
         name=embed_text, value="Ипользуй /mob [имя]‌‌‍‍", inline=False)
