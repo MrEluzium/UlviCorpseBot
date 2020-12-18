@@ -2,7 +2,6 @@
 import discord
 import asyncio
 import sqlite3
-import progressbar
 from discord.ext import tasks, commands
 from os import name as os_name
 from datetime import datetime, timedelta
@@ -562,13 +561,17 @@ async def shop(ctx):
     embed = discord.Embed(title=shop_name, description=" ", color=15900236)
     embeds = list()
     count = 1
+    player = Character.read(ctx.author.id)
     for item in items:
-        embed.add_field(name=f"• {item[1]} •\n:coin: {item[3]}  •  {cover}{item[2]}", value=" ‌‌‍‍", inline=False)
-        embed.set_footer(text=f"/buy {type} [item]")
-        if count % 5 == 0:
-            embeds.append(embed)
-            embed = discord.Embed(title=shop_name, description=" ", color=15900236)
-        count += 1
+        print(item[0], player[11], player[13])
+        print(not player[11], item[0] != player[11], not player[11] or item[0] != player[11])
+        if (not player[11] or item[0] != player[11]) and (not player[13] or item[0] != player[13]):
+            embed.add_field(name=f"• {item[1]} •\n:coin: {item[3]}  •  {cover}{item[2]}", value=" ‌‌‍‍", inline=False)
+            if count % 5 == 0:
+                embed.set_footer(text=f"/buy {type} [item]")
+                embeds.append(embed)
+                embed = discord.Embed(title=shop_name, description=" ", color=15900236)
+            count += 1
     embeds.append(embed)
 
     message = await ctx.send(embed=embeds[0])
@@ -602,17 +605,54 @@ async def buy(ctx):
             cover = ":shield: "
             controller = Armour
     player = Character.read(ctx.author.id)
-    player_id, player_lvl, player_exp, player_full_exp, player_expmax, player_hp, player_protection, player_hp_max, player_power, player_money, player_inventory = \
+    player_id, player_lvl, player_exp, player_full_exp, player_expmax, player_hp, player_hp_max, player_protection, player_power, player_weapon_power, player_money = \
         player[0], player[1], player[2], player[3], player[4], player[5], player[6], player[7], player[8], player[9], player[10]
     item = controller.read(item_name)
     if item:
         item_id, item_stat, item_price = item[0], item[2], item[3]
+        if item_id == player[11] or item_id == player[13]:
+            embed = discord.Embed(title="Вы уже приобрели этот предмет!", description=" ", color=15900236)
+            await ctx.send(embed=embed)
+            return
         if item_price <= player_money:
             Character.set_stat(player_id, 'money', player_money-item_price)
+            health_raising = ""
+            power_raising = ""
             if type == 'Weapon':
-                Character.set_stat(player_id, "protection", item_stat)
+                power_raising = item_stat - player_weapon_power
+                power_raising = f"(+{power_raising})" if power_raising >= 0 else f"({power_raising})"
+                Character.set_stat(player_id, "equipped_weapon", item_id)
+                Character.set_stat(player_id, "weapon_power", item_stat)
             else:
-                Character.set_stat(player_id, "hpmax", player_hp_max-player_protection+item_stat)
+                new_hp = (player_hp_max - player_protection) + item_stat
+                health_raising = new_hp - player_hp_max
+                health_raising = f"(+{health_raising})" if health_raising >= 0 else f"({health_raising})"
+                Character.set_stat(player_id, "hpmax", new_hp)
+                Character.set_stat(player_id, "equipped_armour", item_id)
+                if player_hp == player_hp_max:
+                    Character.set_stat(player_id, "hp", new_hp)
+                Character.set_stat(player_id, "protection", item_stat)
+            embed = discord.Embed(title=f"Вы успешно приобрели предмет!", description=" ", color=15900236)
+            embed.add_field(name=f"**• {item_name} •**\n:coin: {item_price}  •  {cover}{item_stat}", value=" ‌‌‍‍", inline=False)
+
+            health_recovery = ""
+            if player[12]:
+                d1 = datetime.strptime(player[12], "%Y-%m-%d %H:%M:%S.%f")
+                d2 = datetime.now()
+                delta = d2 - d1
+                delta = delta.total_seconds()
+
+                health_recovery = f"\n\n:clock4: Восстановление через {await get_delta(delta)}"
+            player = Character.read(ctx.author.id)
+            embed.add_field(
+                name=f"**Ваши характеристики:\n"
+                     f":heart: Здоровье    {player[5]} | {player[6]} {health_raising}\n"
+                     f":crossed_swords: Сила               {player[8] + player[9]} {power_raising}\n"
+                     f":coin: Монеты       {player[10]} (-{item_price})**"
+                     f"{health_recovery}",
+                value=" ‌‌‍‍", inline=False)
+            await ctx.send(embed=embed)
+
         else:
             embed = discord.Embed(title="У вас недостаточно монет!", description=" ", color=15900236)
             await ctx.send(embed=embed)
@@ -627,8 +667,8 @@ async def check_player_in_game(id):
     if not player:
         Character.create(id)
 
-    elif player[10]:
-        d1 = datetime.strptime(player[10], "%Y-%m-%d %H:%M:%S.%f")
+    elif player[12]:
+        d1 = datetime.strptime(player[12], "%Y-%m-%d %H:%M:%S.%f")
         d2 = datetime.now()
         delta = d2 - d1
         delta = delta.total_seconds()
@@ -648,7 +688,6 @@ async def get_delta(time):
 async def author(ctx):
     embed = discord.Embed(title="\n:heartpulse: Артём Eluzium :heartpulse: ", url="https://eluzium.aqulas.me/",
                           color=0xb04e5d)
-    # embed.set_author(name="Author credits", url="https://eluzium.aqulas.me/")
     embed.add_field(name='Click on text above', value='luv u <3', inline=True)
     file = discord.File("data/pictures/Author.jpg")
     embed.set_thumbnail(url="attachment://Author.jpg")
