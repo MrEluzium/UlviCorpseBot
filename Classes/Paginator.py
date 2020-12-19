@@ -1,3 +1,5 @@
+# Copyright (c) 2020 RuCybernetic
+
 # Module of Cybernator library by RuCybernetic.
 # Original library: https://github.com/RuCybernetic/Cybernator
 import discord

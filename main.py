@@ -9,15 +9,18 @@ from Classes.Character import CharacterControl
 from Classes.Enemies import EnemyControl
 from Classes.Guild import GuildControl
 from Classes.Shop import ShopControl
+from Classes.Help import Help
 from settings import TOKEN
 Character = CharacterControl()
 Guild = GuildControl()
 Enemy = EnemyControl()
 Armour = ShopControl('Armours')
 Weapon = ShopControl('Weapons')
+Help = Help()
 intents = discord.Intents.default()
 intents.members = True
 bot = commands.Bot(command_prefix='/', intents=intents)
+bot.remove_command("help")
 
 
 async def set_activity(score=0):
@@ -660,6 +663,17 @@ async def buy(ctx):
     else:
         embed = discord.Embed(title="Такого предмета нет!", description=" ", color=15900236)
         await ctx.send(embed=embed)
+
+
+@bot.command(nmae='help')
+async def help(ctx):
+    context = ctx.message.content.split()
+
+    if len(context) == 1:
+        await ctx.send("all commands here")
+    else:
+        command = " ".join(context[1:])
+        await ctx.send(command + " command here")
 
 
 # Проверяем, участвет ли аккаунт в игре. Если нет, то создаем новоро персонажа.
