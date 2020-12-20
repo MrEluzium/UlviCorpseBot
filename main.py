@@ -43,14 +43,14 @@ async def set_activity(score=0):
                   'Cake is a lie!',
                   'Your princess is in another castle!',
                   '@Ulvi is amazing!',
-                  "/help is your path to success"]
+                  "/help | release v1.2.0"]
     cur_activity = discord.Game(activities[score])
     await bot.change_presence(status=discord.Status.online, activity=cur_activity)
 
 
 @bot.event
 async def on_ready():
-    await set_activity(3)
+    await set_activity(5)
     print(f'{bot.user} has connected to Discord!')
 
 
