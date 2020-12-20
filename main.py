@@ -528,7 +528,7 @@ async def fight(ctx):
         mob_color = int(mob[8]) if mob[8] else None
         player = Character.read(ctx.author.id)
 
-        player_id, player_lvl, player_exp, player_full_exp, player_expmax, player_protection, player_hp, player_hp_max, player_power, player_weapon_power, player_money =\
+        player_id, player_lvl, player_exp, player_full_exp, player_expmax, player_hp, player_hp_max, player_protection, player_power, player_weapon_power, player_money =\
             player[0], player[1], player[2], player[3], player[4], player[5], player[6], player[7], player[8], player[9], player[10]
 
         file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power+player_weapon_power, '...')
