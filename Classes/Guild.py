@@ -14,7 +14,7 @@
 
 import sqlite3
 import discord
-from discord import colour, permissions
+from discord import colour
 db_path = 'data/databases/Guilds.db'
 
 
