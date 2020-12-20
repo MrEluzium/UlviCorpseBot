@@ -376,7 +376,6 @@ async def admin_help(ctx):
             if not command_data["is_alias"]:
                 embed.add_field(name=f"/{command} {command_data['syntax']}", value=command_data['description'],
                                 inline=False)
-                print(count)
                 if (count + 1) == 15:
                     embeds.append(embed)
                     break
@@ -391,7 +390,6 @@ async def admin_help(ctx):
     else:
         command = " ".join(context[1:])
         command_data = Help.get_admin_command(command)
-        print(command)
 
         if command_data:
             footer = ""
