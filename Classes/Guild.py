@@ -71,6 +71,11 @@ class GuildControl:
         conn.close()
         return result
 
+    def get_channel_id(self, id, type):
+        types = {"tavern": 5, "shop": 6, "adventure": 7}
+        guild = self.read(id)
+        return guild[types[type]]
+
     async def set_slowmode(self, guild, time):
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()

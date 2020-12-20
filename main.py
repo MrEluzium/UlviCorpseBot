@@ -38,14 +38,19 @@ bot.remove_command("help")
 
 
 async def set_activity(score=0):
-    activities = ['#StayHome', f'on {len(bot.guilds)} servers!', 'Cake is a lie!', 'Your princess is in another castle!']
+    activities = ['#StayHome',
+                  f'on {len(bot.guilds)} servers!',
+                  'Cake is a lie!',
+                  'Your princess is in another castle!',
+                  '@Ulvi is amazing!',
+                  "/help is your path to success"]
     cur_activity = discord.Game(activities[score])
     await bot.change_presence(status=discord.Status.online, activity=cur_activity)
 
 
 @bot.event
 async def on_ready():
-    # await set_activity(3)
+    await set_activity(3)
     print(f'{bot.user} has connected to Discord!')
 
 
@@ -88,6 +93,14 @@ async def check_adventure(ctx):
     await check_player_in_game(ctx.author.id)
     result = Guild.read(ctx.guild.id)
     if ctx.channel.id == result[7]:
+        return True
+    return False
+
+
+async def check_category(ctx):
+    await check_player_in_game(ctx.author.id)
+    result = Guild.read(ctx.guild.id)
+    if ctx.channel.category_id == result[3]:
         return True
     return False
 
@@ -345,7 +358,58 @@ async def remove_shop_item(ctx):
             await ctx.send('> *Такого предмета нет!*')
 
 
-@bot.command(name='stats')
+@bot.command(name='admin_help', aliases=['adminhelp', 'adhelp'])
+@commands.check(check_admin)
+async def admin_help(ctx):
+    context = ctx.message.content.split()
+    admin_commands = Help.admin_commands
+    keys = list(admin_commands.keys())
+
+    if len(context) == 1:
+        embeds = list()
+        embed = discord.Embed(title="Супер секретные команды",
+                              color=6375613)
+        count = 1
+        for q in range(len(keys)):
+            command = keys[q]
+            command_data = admin_commands[command]
+            if not command_data["is_alias"]:
+                embed.add_field(name=f"/{command} {command_data['syntax']}", value=command_data['description'],
+                                inline=False)
+                print(count)
+                if (count + 1) == 15:
+                    embeds.append(embed)
+                    break
+                elif count % 8 == 0:
+                    embeds.append(embed)
+                    embed = discord.Embed(title="Супер секретные команды", color=6375613)
+                count += 1
+        message = await ctx.send(embed=embeds[0])
+        page = Paginator(bot, message, use_more=False, embeds=embeds)
+        await page.start()
+
+    else:
+        command = " ".join(context[1:])
+        command_data = Help.get_admin_command(command)
+        print(command)
+
+        if command_data:
+            footer = ""
+            if len(command_data['aliases']) > 0:
+                footer = f"Алиасы: {', '.join(command_data['aliases'])}\n\n"
+            embed = discord.Embed(title=f"/{command} {command_data['syntax']}",
+                                  description=f"**{command_data['description']}**\n\n"
+                                              f"{command_data['syntax_description']}\n\n"
+                                              f"{footer}",
+                                  color=6375613)
+            # embed.set_footer(text=f"")
+            await ctx.send(embed=embed)
+        else:
+            embed = discord.Embed(title="Такой команды нет", description=" ", color=6375613)
+            await ctx.send(embed=embed)
+
+
+@bot.command(name='stats', aliases=["profile"])
 @commands.check(check_tavern)
 async def stats(ctx):
     player = Character.read(ctx.author.id)
@@ -679,15 +743,55 @@ async def buy(ctx):
         await ctx.send(embed=embed)
 
 
+@commands.check(check_category)
 @bot.command(nmae='help')
 async def help(ctx):
     context = ctx.message.content.split()
+    bot_commands = Help.commands
 
     if len(context) == 1:
-        await ctx.send("all commands here")
+        embeds = list()
+        for i in range(3):
+            type = list(bot_commands.keys())[i]
+            embed = discord.Embed(title="Помощь", description=f"**Команды для раздела {bot.get_channel(Guild.get_channel_id(ctx.guild.id, type)).mention}**", color=6375613)
+            for q in range(len(bot_commands[type])):
+                command = list(bot_commands[type].keys())[q]
+                command_data = bot_commands[type][command]
+                if not command_data["is_alias"]:
+                    embed.add_field(name=f"/{command} {command_data['syntax']}", value=command_data['description'], inline=False)
+            # embed.set_footer(text="/help [command]")
+            embeds.append(embed)
+
+        embed = discord.Embed(title="Помощь",
+                              description=f"**Команды для всех разделов**",
+                              color=6375613)
+        embed.add_field(name="/help", value="Вызвать это сообщение. Зачем это здесь?", inline=False)
+        embed.add_field(name="/help [command]", value="Подробная информация о команде", inline=False)
+        embed.add_field(name="/author", value="Ссылка на девелопера", inline=False)
+        embeds.append(embed)
+
+        message = await ctx.send(embed=embeds[0])
+        page = Paginator(bot, message, use_more=False, embeds=embeds)
+        await page.start()
+
     else:
         command = " ".join(context[1:])
-        await ctx.send(command + " command here")
+        command_data = Help.get_command(command)
+
+        if command_data:
+            footer = f"Работает только в {bot.get_channel(Guild.get_channel_id(ctx.guild.id, command_data['type'])).mention}"
+            if len(command_data['aliases']) > 0:
+                footer = f"Алиасы: {', '.join(command_data['aliases'])}\n" + footer
+            embed = discord.Embed(title=f"/{command} {command_data['syntax']}",
+                                  description=f"**{command_data['description']}**\n\n"
+                                              f"{command_data['syntax_description']}"
+                                              f"{footer}",
+                                  color=6375613)
+            embed.set_footer(text=f"")
+            await ctx.send(embed=embed)
+        else:
+            embed = discord.Embed(title="Такой команды нет", description=" ", color=6375613)
+            await ctx.send(embed=embed)
 
 
 # Проверяем, участвет ли аккаунт в игре. Если нет, то создаем новоро персонажа.
@@ -713,11 +817,15 @@ async def get_delta(time):
     return delta
 
 
+@commands.check(check_category)
 @bot.command(name='author')
 async def author(ctx):
-    embed = discord.Embed(title="\n:heartpulse: Артём Eluzium :heartpulse: ", url="https://eluzium.aqulas.me/",
+    embed = discord.Embed(title="\n:heartpulse: Артём Eluzium :heartpulse: ",
+                          url="https://eluzium.aqulas.me/",
+                          description=f"Этот бот был создан {bot.get_user(781211906572288001).mention}\n"
+                                      f"Специально для сервера **Shop Titans - РУ сообщество игры**\n\n"
+                                      f"Всем печенек <3",
                           color=0xb04e5d)
-    embed.add_field(name='Click on text above', value='luv u <3', inline=True)
     file = discord.File("data/pictures/Author.jpg")
     embed.set_thumbnail(url="attachment://Author.jpg")
     await ctx.send(file=file, embed=embed)
