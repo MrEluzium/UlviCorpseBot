@@ -585,7 +585,7 @@ async def fight(ctx):
             file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color,
                                                 player_hp, player_power+player_weapon_power,
                                                 f'__Вы не сумели победить врага__\n:heart: Ваше здоровье на нуле\n:clock4: Время восстановления: 15 минут')
-            await ctx.send(embed=embed)
+            await message.edit(embed=embed)
 
     else:
         embed = discord.Embed(title="Такого существа нет!", description=" ")
