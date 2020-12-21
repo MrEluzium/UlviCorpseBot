@@ -531,6 +531,22 @@ async def fight(ctx):
         player_id, player_lvl, player_exp, player_full_exp, player_expmax, player_hp, player_hp_max, player_protection, player_power, player_weapon_power, player_money =\
             player[0], player[1], player[2], player[3], player[4], player[5], player[6], player[7], player[8], player[9], player[10]
 
+        if player_hp == 0:
+            if player[12]:
+                d1 = datetime.strptime(player[12], "%Y-%m-%d %H:%M:%S.%f")
+                d2 = datetime.now()
+                delta = d2 - d1
+                delta = delta.total_seconds()
+                health_recovery = f":clock4: Восстановление через {await get_delta(delta)}"
+
+                embed_color = ctx.author.color
+                if str(embed_color) == '#000000':
+                    embed_color = discord.colour.Colour(16777214)
+                embed = discord.Embed(title=" ", description=" ", color=embed_color)
+                embed.add_field(name=f":heart: Ваше здоровье на нуле\n{health_recovery}", value=" ‌‌‍‍", inline=False)
+            await ctx.send(embed=embed)
+            return
+
         file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power+player_weapon_power, '...')
         message = await ctx.send(file=file, embed=embed)
 
@@ -542,13 +558,13 @@ async def fight(ctx):
         battle_mob_hp = mob_hp
         battle_player_hp = player_hp
         while count < 300:
-            battle_mob_hp -= (player_power+player_weapon_power)
-            if battle_mob_hp <= 0:
-                winner = 'player'
-                break
             battle_player_hp -= mob_power
             if battle_player_hp <= 0:
                 winner = 'mob'
+                break
+            battle_mob_hp -= (player_power+player_weapon_power)
+            if battle_mob_hp <= 0:
+                winner = 'player'
                 break
 
         if battle_player_hp < player_hp_max:
