@@ -37,20 +37,14 @@ bot = commands.Bot(command_prefix='/', intents=intents)
 bot.remove_command("help")
 
 
-async def set_activity(score=0):
-    activities = ['#StayHome',
-                  f'on {len(bot.guilds)} servers!',
-                  'Cake is a lie!',
-                  'Your princess is in another castle!',
-                  '@Ulvi is amazing!',
-                  "/help | release v1.2.0"]
-    cur_activity = discord.Game(activities[score])
+async def set_activity():
+    cur_activity = discord.Game("/help | Beta v1.2.2")
     await bot.change_presence(status=discord.Status.online, activity=cur_activity)
 
 
 @bot.event
 async def on_ready():
-    await set_activity(5)
+    await set_activity()
     print(f'{bot.user} has connected to Discord!')
 
 
@@ -449,26 +443,35 @@ async def top(ctx):
     max = len(rating) - 1
     embeds = list()
     embed_main = discord.Embed(title='Рейтинг игроков', description=" ", color=16104960)
-    embed_main.set_thumbnail(url=ctx.message.guild.get_member(rating[0][0]).avatar_url)
-    embed_main.add_field(name=f":crown: {rating[0][1]}  •  :crossed_swords: {rating[0][8]+rating[0][9]}",
-                         value=f"**1. {ctx.message.guild.get_member(rating[0][0]).mention}**", inline=False)
+    try:
+        embed_main.set_thumbnail(url=ctx.message.guild.get_member(rating[0][0]).avatar_url)
+        embed_main.add_field(name=f":crown: {rating[0][1]}  •  :crossed_swords: {rating[0][8]+rating[0][9]}",
+                             value=f"**1. {ctx.message.guild.get_member(rating[0][0]).mention}**", inline=False)
+    except AttributeError:
+        pass
 
     for i in range(1, 5 if max >= 5 else max + 1):
-        embed_main.add_field(name=f":crown: {rating[i][1]}  •  :crossed_swords: {rating[i][8]+rating[i][9]}",
-                             value=f"{i+1}. {ctx.message.guild.get_member(rating[i][0]).mention}", inline=False)
+        try:
+            embed_main.add_field(name=f":crown: {rating[i][1]}  •  :crossed_swords: {rating[i][8]+rating[i][9]}",
+                                 value=f"{i+1}. {ctx.message.guild.get_member(rating[i][0]).mention}", inline=False)
+        except AttributeError:
+            pass
     embeds.append(embed_main)
 
     embed = discord.Embed(title='Рейтинг игроков', description=" ", color=16104960)
     for player in rating[5:]:
-        embed.add_field(name=f":crown: {player[1]}  •  :crossed_swords: {player[8]+player[9]}",
-                        value=f"{count+1}. {ctx.message.guild.get_member(player[0]).mention}", inline=False)
-        if count == max:
-            embeds.append(embed)
-            break
-        if (count + 1) % 5 == 0:
-            embeds.append(embed)
-            embed = discord.Embed(title='Рейтинг игроков', description=" ", color=16104960)
-        count += 1
+        try:
+            embed.add_field(name=f":crown: {player[1]}  •  :crossed_swords: {player[8]+player[9]}",
+                            value=f"{count+1}. {ctx.message.guild.get_member(player[0]).mention}", inline=False)
+            if count == max:
+                embeds.append(embed)
+                break
+            if (count + 1) % 5 == 0:
+                embeds.append(embed)
+                embed = discord.Embed(title='Рейтинг игроков', description=" ", color=16104960)
+            count += 1
+        except AttributeError:
+            pass
 
     message = await ctx.send(embed=embed_main)
     page = Paginator(bot, message, use_more=False, embeds=embeds)
@@ -544,7 +547,7 @@ async def fight(ctx):
                     embed_color = discord.colour.Colour(16777214)
                 embed = discord.Embed(title=" ", description=" ", color=embed_color)
                 embed.add_field(name=f":heart: Ваше здоровье на нуле\n{health_recovery}", value=" ‌‌‍‍", inline=False)
-            await ctx.send(embed=embed)
+                await ctx.send(embed=embed)
             return
 
         file, embed = await get_fight_embed(mob_name, mob_bowed_name, mob_hp, mob_power, mob_icon, mob_color, player_hp, player_power+player_weapon_power, '...')
