@@ -38,7 +38,7 @@ bot.remove_command("help")
 
 
 async def set_activity():
-    cur_activity = discord.Game("/help | Beta v1.2.2")
+    cur_activity = discord.Game("/help | release v1.2.2")
     await bot.change_presence(status=discord.Status.online, activity=cur_activity)
 
 
