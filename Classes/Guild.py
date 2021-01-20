@@ -59,7 +59,7 @@ class GuildControl:
         conn.close()
 
         [await guild.get_role(result[i]).delete(reason=reason) for i in range(1, 3)]  # Delete roles
-        [await guild.get_channel(result[i]).delete(reason=reason) for i in range(7, 2, -1)]  # Delete channels amd category
+        [await guild.get_channel(result[i]).delete(reason=reason) for i in range(7, 2, -1)]  # Delete channels and category
 
         if not soft:
             await guild.leave()
