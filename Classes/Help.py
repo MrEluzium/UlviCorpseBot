@@ -340,7 +340,6 @@ class Help:
         return None
 
     def get_admin_command(self, command):
-        print(command)
         try:
             command = self.admin_commands[command]
             return command
